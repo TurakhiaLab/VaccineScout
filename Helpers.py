@@ -545,3 +545,34 @@ def compute_auc_ceil_fraction(current_seq_df: pd.DataFrame, future_seq_dfs: dict
         auc_ceil_dict[time_key] = valid_tips / total_tips if total_tips > 0 else 0.0
 
     return auc_ceil_dict
+
+def build_node_path(sample_id, parent_lookup):
+    path = []
+    current_node = sample_id
+    # Keep moving up the tree until no parent is found or root (assuming root has None or missing parent)
+    while current_node in parent_lookup and parent_lookup[current_node] is not None:
+        path.append(current_node)
+        current_node = parent_lookup[current_node]
+    # Add the root node (which has no parent)
+    path.append(current_node)
+    # Reverse to get path from root -> sample_id
+    path.reverse()
+    return path
+
+def find_anchor_remainder_reverse(node_path, nodes_before_cutoff):
+    # Traverse backwards from the end
+    for i in range(len(node_path) - 1, -1, -1):
+        node = node_path[i]
+        if node in nodes_before_cutoff:
+            anchor = node
+            remainder = node_path[i+1:]  # nodes after anchor towards the sample
+            return (anchor, remainder)
+    # If no anchor found
+    return (None, node_path)
+
+def total_mutations_in_remainder(remainder_nodes, mutations_lookup):
+    total = 0
+    for node in remainder_nodes:
+        muts = mutations_lookup.get(node, [])
+        total += len(muts)
+    return total

@@ -12,7 +12,6 @@
 </div>
 
 </div>
-<div align="center">
 
 ## Table of Contents
 - [Introduction](#intro) ([Wiki])
@@ -30,8 +29,7 @@
 
 
 ## <a name="intro"></a> Introduction
-
-
+To be Added
 
 
 <div style="width: 600px; margin: 0 auto;">

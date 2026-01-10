@@ -30,18 +30,8 @@
 
 ## <a name="intro"></a> Introduction
 To be Added
-
-
-<div style="width: 600px; margin: 0 auto;">
-   <img src="docs/images/WEPP_Overview_Display.svg" style="display: block; margin-left: auto; margin-right: auto; width: 100%;">
-  <div style="text-align: justify; margin-top: 10px;">
-    </div>
-</div>
-
-
 ## <a name="install"></a> Installation
-
-
+To be Added
 
 ##  <a name="example"></a> Quick Start
 The following steps will reproduce the results and figures described in the manuscript.

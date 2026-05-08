@@ -14,14 +14,11 @@ conda install -c conda-forge tbb tbb-devel --solver=libmamba
 export CPATH="$CONDA_PREFIX/include${CPATH:+:$CPATH}"
 export LIBRARY_PATH="$CONDA_PREFIX/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
 
-bash scripts/fetch_usher.sh
-
 mkdir -p scripts/build
 cd scripts/build
 cmake .. -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_CXX_COMPILER="$CONDA_PREFIX/bin/g++" \
-  -DCMAKE_C_COMPILER="$CONDA_PREFIX/bin/gcc" \
-  -DBUILD_GET_MUTATIONS=ON
+  -DCMAKE_C_COMPILER="$CONDA_PREFIX/bin/gcc"
 cmake --build . -j
 cd ../../
 

@@ -1,11 +1,14 @@
 """
-Script to extract single-nucleotide mutations from a MAT, translate them to
-amino acid mutations, keep only Spike (``S:...``) calls, and write one Parquet file
-with every tree node (internal nodes and leaf haplotypes).
+Script to extract single-nucleotide mutations from a MAT via ``bte``,
+translate them to amino acid mutations, keep only Spike (``S:...``) calls,
+and write Parquet files with every tree node (internal nodes and leaf haplotypes).
 
-First runs ``scripts/get_mutations`` (must be built with BUILD_GET_MUTATIONS) to write
-``{output-dir}/{output-stem}_nucleotide.parquet`` derived from ``--output-mutations``,
-then translates those nt haplotypes to amino acid space.
+Writes two files next to ``--output-mutations``:
+
+- ``<stem>.parquet`` — cumulative haplotype via ``tree.get_haplotype(node_id)``
+  (mutations from reference along the path to the node).
+- ``<stem>_branch.parquet`` — mutations stored only on that node's incoming branch
+  (``node.mutations``), not the full ancestral path.
 
 Usage:
     python scripts/get_amino_acid_mutations_of_sequences.py \\
@@ -20,7 +23,6 @@ working directory so that the `pyrocov` package can be imported from it.
 import argparse
 import csv
 import os
-import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -44,6 +46,7 @@ def _ensure_pyrocov_on_path():
         )
     if pyrocov_root not in sys.path:
         sys.path.insert(0, pyrocov_root)
+
 
 _ensure_pyrocov_on_path()
 
@@ -138,19 +141,27 @@ def nuc_mutations_to_aa_mutations_modified(refseq: str, ms: List[str]) -> List[s
     return result
 
 
-def write_aa_mutations_parquet_from_nt_parquet(
-    refseq: str,
-    filename: str,
-    nt_parquet_path: str,
+def branch_aa_mutations_parquet_path(output_mutations: str) -> str:
+    """``output.parquet`` → ``output_branch.parquet`` (same directory, stem + ``_branch``)."""
+    p = Path(output_mutations).expanduser().resolve()
+    return str(p.parent / f"{p.stem}_branch{p.suffix}")
+
+
+def write_cumulative_and_branch_aa_mutations_parquets(
+    tree,
+    refseq,
+    cumulative_filename: str,
+    branch_filename: str,
+    nodes: Sequence,
     batch_size: int = 100_000,
     progress_every: Optional[int] = 100_000,
     progress_label: str = "nodes",
 ) -> None:
     """
-    Read ``node_name`` (or ``sample_id``) and ``nt_mutations`` (;-separated nt
-    strings) from Parquet — e.g. from ``get_mutations`` — translate to Spike-only
-    amino acid mutations, and write (``sample_id``, ``aa_mutations``) Parquet
-    using the same schema as :func:`write_aa_mutations_parquet`.
+    For each MAT node in preorder ``nodes``, write two Parquet files (same schema):
+
+    - Cumulative Spike AA mutations from ``tree.get_haplotype(node.id)``.
+    - Branch-only Spike AA mutations from ``node.mutations`` (incoming edge).
     """
     schema = pa.schema(
         [
@@ -158,146 +169,57 @@ def write_aa_mutations_parquet_from_nt_parquet(
             ("aa_mutations", pa.large_string()),
         ]
     )
-    pf = pq.ParquetFile(nt_parquet_path)
-    col_names = pf.schema.names
-    if "node_name" in col_names:
-        node_col = "node_name"
-    elif "sample_id" in col_names:
-        node_col = "sample_id"
-    else:
-        raise ValueError(
-            "nt-mutations Parquet must have column 'node_name' or 'sample_id'; "
-            f"got {col_names!r}"
-        )
-    if "nt_mutations" not in col_names:
-        raise ValueError(
-            f"nt-mutations Parquet must have column 'nt_mutations'; got {col_names!r}"
-        )
+    buf_c_ids: List[str] = []
+    buf_c_aa: List[str] = []
+    buf_b_ids: List[str] = []
+    buf_b_aa: List[str] = []
 
-    buf_ids: List[str] = []
-    buf_aa: List[str] = []
-    processed = 0
-
-    with pq.ParquetWriter(filename, schema) as writer:
-        for batch in pf.iter_batches(
-            batch_size=batch_size, columns=[node_col, "nt_mutations"]
-        ):
-            nodes = batch.column(0).to_pylist()
-            nt_raw_list = batch.column(1).to_pylist()
-            for sample, nt_raw in zip(nodes, nt_raw_list):
-                if nt_raw is None:
-                    nt_str = ""
-                else:
-                    nt_str = str(nt_raw)
-                nt_list = [p.strip() for p in nt_str.split(";") if p.strip()]
-                aa_mutations = nuc_mutations_to_aa_mutations_modified(
-                    refseq, nt_list
-                )
-                spike_only = [m for m in aa_mutations if m.startswith("S:")]
-                buf_ids.append(sample)
-                buf_aa.append(";".join(spike_only))
-
-                if len(buf_ids) >= batch_size:
-                    writer.write_table(
-                        pa.Table.from_arrays(
-                            [pa.array(buf_ids), pa.array(buf_aa)],
-                            schema=schema,
-                        )
-                    )
-                    buf_ids.clear()
-                    buf_aa.clear()
-
-                processed += 1
-                if progress_every and processed % progress_every == 0:
-                    print(f"{processed} {progress_label} processed.")
-
-        if buf_ids:
-            writer.write_table(
+    def flush_pair(w_c, w_b) -> None:
+        if buf_c_ids:
+            w_c.write_table(
                 pa.Table.from_arrays(
-                    [pa.array(buf_ids), pa.array(buf_aa)],
+                    [pa.array(buf_c_ids), pa.array(buf_c_aa)],
                     schema=schema,
                 )
             )
-
-
-def write_aa_mutations_parquet(
-    tree,
-    refseq,
-    filename,
-    node_ids: Sequence[str],
-    batch_size: int = 100_000,
-    progress_every: Optional[int] = 100_000,
-    progress_label: str = "nodes",
-):
-    """
-    For each node ID in ``node_ids``, translate nucleotide mutations to amino acid
-    space and write only Spike gene mutations (strings like ``S:G639V``) to Parquet.
-    Rows are flushed in batches of ``batch_size`` to limit memory use.
-    Progress is printed every ``progress_every`` rows; set to ``0`` or ``None`` to disable.
-    """
-    schema = pa.schema(
-        [
-            ("sample_id", pa.large_string()),
-            ("aa_mutations", pa.large_string()),
-        ]
-    )
-    buf_ids: List[str] = []
-    buf_aa: List[str] = []
-
-    with pq.ParquetWriter(filename, schema) as writer:
-        for i, sample in enumerate(node_ids):
-            nt_mutations = list(tree.get_haplotype(sample))
-            aa_mutations = nuc_mutations_to_aa_mutations_modified(
-                refseq, nt_mutations
-            )
-            spike_only = [m for m in aa_mutations if m.startswith("S:")]
-            buf_ids.append(sample)
-            buf_aa.append(";".join(spike_only))
-
-            if len(buf_ids) >= batch_size:
-                writer.write_table(
-                    pa.Table.from_arrays(
-                        [pa.array(buf_ids), pa.array(buf_aa)],
-                        schema=schema,
-                    )
+            buf_c_ids.clear()
+            buf_c_aa.clear()
+        if buf_b_ids:
+            w_b.write_table(
+                pa.Table.from_arrays(
+                    [pa.array(buf_b_ids), pa.array(buf_b_aa)],
+                    schema=schema,
                 )
-                buf_ids.clear()
-                buf_aa.clear()
+            )
+            buf_b_ids.clear()
+            buf_b_aa.clear()
+
+    with pq.ParquetWriter(cumulative_filename, schema) as w_cumulative, pq.ParquetWriter(
+        branch_filename, schema
+    ) as w_branch:
+        for i, node in enumerate(nodes):
+            sample = node.id
+            nt_path = list(tree.get_haplotype(sample))
+            nt_branch = list(node.mutations)
+
+            aa_path = nuc_mutations_to_aa_mutations_modified(refseq, nt_path)
+            aa_branch = nuc_mutations_to_aa_mutations_modified(refseq, nt_branch)
+
+            spike_path = [m for m in aa_path if m.startswith("S:")]
+            spike_branch = [m for m in aa_branch if m.startswith("S:")]
+
+            buf_c_ids.append(sample)
+            buf_c_aa.append(";".join(spike_path))
+            buf_b_ids.append(sample)
+            buf_b_aa.append(";".join(spike_branch))
+
+            if len(buf_c_ids) >= batch_size:
+                flush_pair(w_cumulative, w_branch)
 
             if progress_every and (i + 1) % progress_every == 0:
                 print(f"{i + 1} {progress_label} processed.")
 
-        if buf_ids:
-            writer.write_table(
-                pa.Table.from_arrays(
-                    [pa.array(buf_ids), pa.array(buf_aa)],
-                    schema=schema,
-                )
-            )
-
-
-def nt_mutations_parquet_path(output_mutations: str) -> str:
-    """
-    From ``--output-mutations`` (e.g. ``.../output.parquet``), return the path for
-    nucleotide haplotypes: same directory, ``{stem}_nucleotide.parquet``.
-    """
-    p = Path(output_mutations).expanduser().resolve()
-    return str(p.parent / f"{p.stem}_nucleotide{p.suffix}")
-
-
-def run_get_mutations(mat_path: str, nt_parquet_out: str) -> None:
-    """Invoke ``scripts/get_mutations`` built next to this file."""
-    script_dir = Path(__file__).resolve().parent
-    exe = script_dir / ("get_mutations.exe" if os.name == "nt" else "get_mutations")
-    if not exe.is_file():
-        raise FileNotFoundError(
-            f"Missing '{exe}'. Build it (e.g. cmake -DBUILD_GET_MUTATIONS=ON) "
-            "and ensure the binary sits alongside this script."
-        )
-    os.makedirs(os.path.dirname(os.path.abspath(nt_parquet_out)), exist_ok=True)
-    cmd = [str(exe), "--mat", mat_path, "--output", nt_parquet_out]
-    print(f"Running {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
+        flush_pair(w_cumulative, w_branch)
 
 
 def write_tree_parent_child_csv(tree, csv_path: str) -> None:
@@ -318,8 +240,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Extract single-nucleotide mutations from a MAT, translate them to amino acid "
-            "mutations (Spike-only, e.g. S:G639V), and write one Parquet file covering every "
-            "node (internal + leaves)."
+            "mutations (Spike-only, e.g. S:G639V), and write Parquet files covering every "
+            "node (internal + leaves): cumulative haplotype and branch-only mutations."
         )
     )
     parser.add_argument(
@@ -327,7 +249,10 @@ def parse_args() -> argparse.Namespace:
         "--output-mutations",
         required=True,
         dest="output_mutations",
-        help="Parquet path: one row per tree node (sample_id, aa_mutations Spike-only).",
+        help=(
+            "Parquet path for cumulative haplotype (sample_id, aa_mutations Spike-only). "
+            "Also writes <stem>_branch<suffix> for mutations on each node's branch only."
+        ),
     )
     parser.add_argument(
         "--output-parent-child",
@@ -370,24 +295,28 @@ def main():
 
     print(f"Loading MAT file: {args.mat}")
     tree = bte.MATree(args.mat)
-    
+
     output_parent_child = os.path.abspath(args.output_parent_child)
-    print(
-        f"Writing parent-child nodes to {output_parent_child} ..."
-    )
+    print(f"Writing parent-child nodes to {output_parent_child} ...")
     write_tree_parent_child_csv(tree, output_parent_child)
 
-    nt_parquet = nt_mutations_parquet_path(args.output_mutations)
-    run_get_mutations(args.mat, nt_parquet)
-    print(f"Wrote nucleotide mutations Parquet to {nt_parquet}")
-
-    write_aa_mutations_parquet_from_nt_parquet(
-        refseq, args.output_mutations, nt_parquet
+    nodes = list(tree.depth_first_expansion())
+    branch_parquet = branch_aa_mutations_parquet_path(args.output_mutations)
+    print(
+        f"Writing cumulative haplotype Parquet to {args.output_mutations} "
+        f"and branch mutations to {branch_parquet} ..."
+    )
+    write_cumulative_and_branch_aa_mutations_parquets(
+        tree,
+        refseq,
+        args.output_mutations,
+        branch_parquet,
+        nodes,
     )
 
     print(
         "Process complete! Wrote "
-        f"{nt_parquet}, {args.output_mutations}, and {output_parent_child}"
+        f"{args.output_mutations}, {branch_parquet}, and {output_parent_child}"
     )
 
 

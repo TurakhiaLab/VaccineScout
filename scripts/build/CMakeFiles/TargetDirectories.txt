@@ -1,4 +1,0 @@
-/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/min_dist.dir
-/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/get_mutations.dir
-/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/edit_cache.dir
-/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/rebuild_cache.dir

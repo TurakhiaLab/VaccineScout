@@ -1,7 +1,10 @@
+import re
 import pandas as pd
 import numpy as np
 from Bio import SeqIO
 from typing import *
+
+SPIKE_AA_SUB_RE = re.compile(r"^S:([A-Za-z*])(\d+)([A-Za-z*])")
 
 def split_circulating_and_future(
     df: pd.DataFrame,
@@ -570,9 +573,26 @@ def find_anchor_remainder_reverse(node_path, nodes_before_cutoff):
     # If no anchor found
     return (None, node_path)
 
-def total_mutations_in_remainder(remainder_nodes, mutations_lookup):
-    total = 0
+def get_mutations_from_remainder(anchor_remainder, mutations_lookup):
+    """
+    Collect all spike mutation strings along the remainder path (nodes after the anchor),
+    in path order (root-to-tip along remainder). Lookup values that are a single string
+    are treated as one field; ``;``-separated tokens are split into separate entries.
+    No per-site deduplication—every token from every node is kept.
+    """
+    remainder_nodes = anchor_remainder[1]
+    mutations = []
     for node in remainder_nodes:
         muts = mutations_lookup.get(node, [])
-        total += len(muts)
-    return total
+        if isinstance(muts, str):
+            muts = [muts]
+        elif muts is None:
+            muts = []
+        for mut in muts:
+            if not mut:
+                continue
+            for piece in str(mut).split(";"):
+                piece = piece.strip()
+                if piece:
+                    mutations.append(piece)
+    return mutations

@@ -1,0 +1,424 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineSystem.cmake:233 (message)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      The system is: Linux - 5.4.0-216-generic - x86_64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++ 
+      Build flags: -fvisibility-inlines-hidden;-fmessage-length=0;-march=nocona;-mtune=haswell;-ftree-vectorize;-fPIC;-fstack-protector-strong;-fno-plt;-O2;-ffunction-sections;-pipe;-isystem;/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is GNU, found in:
+        /home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/3.28.3/CompilerIdCXX/a.out
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "/usr/local/share/cmake-3.28/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-7DcnW1"
+      binary: "/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-7DcnW1"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "-fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,--allow-shlib-undefined -Wl,-rpath,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -Wl,-rpath-link,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-7DcnW1'
+        
+        Run Build Command(s): /usr/local/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_477cf/fast
+        /usr/bin/make  -f CMakeFiles/cmTC_477cf.dir/build.make CMakeFiles/cmTC_477cf.dir/build
+        make[1]: Entering directory '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-7DcnW1'
+        Building CXX object CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o
+        /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++   -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include    -v -o CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o -c /usr/local/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp
+        Reading specs from /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/specs
+        Reading specs from /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/conda.specs
+        COLLECT_GCC=/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++
+        Target: x86_64-conda-linux-gnu
+        Configured with: ../configure --prefix=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho --with-slibdir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib --libdir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib --mandir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/share/man --build=x86_64-conda-linux-gnu --host=x86_64-conda-linux-gnu --target=x86_64-conda-linux-gnu --enable-languages=c,c++,fortran,objc,obj-c++ --enable-libgomp --disable-libssp --enable-libquadmath --enable-libquadmath-support --disable-nls --disable-bootstrap --disable-multilib --enable-long-long --without-zstd --with-native-system-header-dir=/usr/include --with-gxx-include-dir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++ --with-gxx-libcxx-include-dir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../include/c++/v1 --with-pkgversion='conda-forge gcc 14.3.0-18' --with-bugurl=https://github.com/conda-forge/ctng-compilers-feedstock/issues/new/choose --enable-libsanitizer --enable-default-pie --enable-threads=posix --enable-__cxa_atexit --with-sysroot=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/x86_64-conda-linux-gnu/sysroot --with-build-sysroot=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_build_env/x86_64-conda-linux-gnu/sysroot --enable-plugin --enable-lto
+        Thread model: posix
+        Supported LTO compression algorithms: zlib
+        gcc version 14.3.0 (conda-forge gcc 14.3.0-18) 
+        COLLECT_GCC_OPTIONS='-fvisibility-inlines-hidden' '-fmessage-length=0' '-march=nocona' '-mtune=haswell' '-ftree-vectorize' '-fPIC' '-fstack-protector-strong' '-fno-plt' '-O2' '-ffunction-sections' '-pipe' '-isystem' '/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include' '-v' '-o' 'CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-dumpdir' 'CMakeFiles/cmTC_477cf.dir/'
+         /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/cc1plus -quiet -v -iprefix /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/ -isysroot /data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot -D_GNU_SOURCE -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include /usr/local/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_477cf.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -march=nocona -mtune=haswell -O2 -version -fvisibility-inlines-hidden -fmessage-length=0 -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -ffunction-sections -idirafter /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include -o - |
+         /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/bin/as -v --64 -o CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o
+        GNU assembler version 2.45 (x86_64-conda-linux-gnu) using BFD version (GNU Binutils) 2.45
+        GNU C++17 (conda-forge gcc 14.3.0-18) version 14.3.0 (x86_64-conda-linux-gnu)
+        	compiled by GNU C version 15.2.0, GMP version 6.2.1, MPFR version 4.1.0, MPC version 1.2.1, isl version isl-0.24-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        ignoring nonexistent directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/include"
+        ignoring duplicate directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++"
+        ignoring duplicate directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/x86_64-conda-linux-gnu"
+        ignoring duplicate directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/backward"
+        ignoring duplicate directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include"
+        ignoring nonexistent directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/local/include"
+        ignoring duplicate directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include-fixed"
+        ignoring nonexistent directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/include"
+        ignoring duplicate directory "/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include"
+        ignoring duplicate directory "/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include"
+          as it is a non-system directory that duplicates a system directory
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include
+         /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++
+         /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/x86_64-conda-linux-gnu
+         /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/backward
+         /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include
+         /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include-fixed
+         /data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/include
+        End of search list.
+        Compiler executable checksum: 0f4abf5452fbb11bbb5a552109a0cc9e
+        COMPILER_PATH=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/bin/
+        LIBRARY_PATH=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/
+        COLLECT_GCC_OPTIONS='-fvisibility-inlines-hidden' '-fmessage-length=0' '-march=nocona' '-mtune=haswell' '-ftree-vectorize' '-fPIC' '-fstack-protector-strong' '-fno-plt' '-O2' '-ffunction-sections' '-pipe' '-isystem' '/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include' '-v' '-o' 'CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-dumpdir' 'CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.'
+        Linking CXX executable cmTC_477cf
+        /usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_477cf.dir/link.txt --verbose=1
+        /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++ -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include  -Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,--allow-shlib-undefined -Wl,-rpath,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -Wl,-rpath-link,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -v CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_477cf 
+        Reading specs from /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/specs
+        Reading specs from /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/conda.specs
+        COLLECT_GCC=/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++
+        COLLECT_LTO_WRAPPER=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/lto-wrapper
+        Target: x86_64-conda-linux-gnu
+        Configured with: ../configure --prefix=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho --with-slibdir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib --libdir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib --mandir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/share/man --build=x86_64-conda-linux-gnu --host=x86_64-conda-linux-gnu --target=x86_64-conda-linux-gnu --enable-languages=c,c++,fortran,objc,obj-c++ --enable-libgomp --disable-libssp --enable-libquadmath --enable-libquadmath-support --disable-nls --disable-bootstrap --disable-multilib --enable-long-long --without-zstd --with-native-system-header-dir=/usr/include --with-gxx-include-dir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++ --with-gxx-libcxx-include-dir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../include/c++/v1 --with-pkgversion='conda-forge gcc 14.3.0-18' --with-bugurl=https://github.com/conda-forge/ctng-compilers-feedstock/issues/new/choose --enable-libsanitizer --enable-default-pie --enable-threads=posix --enable-__cxa_atexit --with-sysroot=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/x86_64-conda-linux-gnu/sysroot --with-build-sysroot=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_build_env/x86_64-conda-linux-gnu/sysroot --enable-plugin --enable-lto
+        Thread model: posix
+        Supported LTO compression algorithms: zlib
+        gcc version 14.3.0 (conda-forge gcc 14.3.0-18) 
+        COMPILER_PATH=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/bin/
+        LIBRARY_PATH=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/
+        COLLECT_GCC_OPTIONS='-fvisibility-inlines-hidden' '-fmessage-length=0' '-march=nocona' '-mtune=haswell' '-ftree-vectorize' '-fPIC' '-fstack-protector-strong' '-fno-plt' '-O2' '-ffunction-sections' '-pipe' '-isystem' '/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include' '-L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib' '-v' '-o' 'cmTC_477cf' '-shared-libgcc' '-dumpdir' 'cmTC_477cf.'
+         /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/collect2 -disable-new-dtags -plugin /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/liblto_plugin.so -plugin-opt=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccA0Sb38.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --sysroot=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_477cf /data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/Scrt1.o /data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/crti.o /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtbeginS.o -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0 -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/../lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/../lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../.. -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib -O2 --sort-common --as-needed -z relro -z now --disable-new-dtags --gc-sections --allow-shlib-undefined -rpath /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -rpath-link /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtendS.o /data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/crtn.o -rpath /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -rpath-link /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/stubs -L /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib
+        COLLECT_GCC_OPTIONS='-fvisibility-inlines-hidden' '-fmessage-length=0' '-march=nocona' '-mtune=haswell' '-ftree-vectorize' '-fPIC' '-fstack-protector-strong' '-fno-plt' '-O2' '-ffunction-sections' '-pipe' '-isystem' '/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include' '-L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib' '-v' '-o' 'cmTC_477cf' '-shared-libgcc' '-dumpdir' 'cmTC_477cf.'
+        make[1]: Leaving directory '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-7DcnW1'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:127 (message)"
+      - "/usr/local/share/cmake-3.28/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CXX implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include]
+          add: [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++]
+          add: [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/x86_64-conda-linux-gnu]
+          add: [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/backward]
+          add: [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include]
+          add: [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include-fixed]
+          add: [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/include]
+        end of search list found
+        collapse include dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include] ==> [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include]
+        collapse include dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++]
+        collapse include dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/x86_64-conda-linux-gnu] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/x86_64-conda-linux-gnu]
+        collapse include dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/backward] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/backward]
+        collapse include dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include]
+        collapse include dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include-fixed] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include-fixed]
+        collapse include dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/include] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/include]
+        implicit include dirs: [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include;/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++;/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/x86_64-conda-linux-gnu;/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/backward;/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include;/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include-fixed;/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CMakeDetermineCompilerABI.cmake:159 (message)"
+      - "/usr/local/share/cmake-3.28/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:2 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        ignore line: [Change Dir: '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-7DcnW1']
+        ignore line: []
+        ignore line: [Run Build Command(s): /usr/local/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_477cf/fast]
+        ignore line: [/usr/bin/make  -f CMakeFiles/cmTC_477cf.dir/build.make CMakeFiles/cmTC_477cf.dir/build]
+        ignore line: [make[1]: Entering directory '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-7DcnW1']
+        ignore line: [Building CXX object CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++   -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include    -v -o CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o -c /usr/local/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Reading specs from /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/specs]
+        ignore line: [Reading specs from /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/conda.specs]
+        ignore line: [COLLECT_GCC=/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++]
+        ignore line: [Target: x86_64-conda-linux-gnu]
+        ignore line: [Configured with: ../configure --prefix=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho --with-slibdir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib --libdir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib --mandir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/share/man --build=x86_64-conda-linux-gnu --host=x86_64-conda-linux-gnu --target=x86_64-conda-linux-gnu --enable-languages=c c++ fortran objc obj-c++ --enable-libgomp --disable-libssp --enable-libquadmath --enable-libquadmath-support --disable-nls --disable-bootstrap --disable-multilib --enable-long-long --without-zstd --with-native-system-header-dir=/usr/include --with-gxx-include-dir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++ --with-gxx-libcxx-include-dir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../include/c++/v1 --with-pkgversion='conda-forge gcc 14.3.0-18' --with-bugurl=https://github.com/conda-forge/ctng-compilers-feedstock/issues/new/choose --enable-libsanitizer --enable-default-pie --enable-threads=posix --enable-__cxa_atexit --with-sysroot=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/x86_64-conda-linux-gnu/sysroot --with-build-sysroot=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_build_env/x86_64-conda-linux-gnu/sysroot --enable-plugin --enable-lto]
+        ignore line: [Thread model: posix]
+        ignore line: [Supported LTO compression algorithms: zlib]
+        ignore line: [gcc version 14.3.0 (conda-forge gcc 14.3.0-18) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-fvisibility-inlines-hidden' '-fmessage-length=0' '-march=nocona' '-mtune=haswell' '-ftree-vectorize' '-fPIC' '-fstack-protector-strong' '-fno-plt' '-O2' '-ffunction-sections' '-pipe' '-isystem' '/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include' '-v' '-o' 'CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-dumpdir' 'CMakeFiles/cmTC_477cf.dir/']
+        ignore line: [ /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/cc1plus -quiet -v -iprefix /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/ -isysroot /data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot -D_GNU_SOURCE -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include /usr/local/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_477cf.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -march=nocona -mtune=haswell -O2 -version -fvisibility-inlines-hidden -fmessage-length=0 -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -ffunction-sections -idirafter /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include -o - |]
+        ignore line: [ /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/bin/as -v --64 -o CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [GNU assembler version 2.45 (x86_64-conda-linux-gnu) using BFD version (GNU Binutils) 2.45]
+        ignore line: [GNU C++17 (conda-forge gcc 14.3.0-18) version 14.3.0 (x86_64-conda-linux-gnu)]
+        ignore line: [	compiled by GNU C version 15.2.0  GMP version 6.2.1  MPFR version 4.1.0  MPC version 1.2.1  isl version isl-0.24-GMP]
+        ignore line: []
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [ignoring nonexistent directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/include"]
+        ignore line: [ignoring duplicate directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++"]
+        ignore line: [ignoring duplicate directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/x86_64-conda-linux-gnu"]
+        ignore line: [ignoring duplicate directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/backward"]
+        ignore line: [ignoring duplicate directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include"]
+        ignore line: [ignoring nonexistent directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/local/include"]
+        ignore line: [ignoring duplicate directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include-fixed"]
+        ignore line: [ignoring nonexistent directory "/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/../../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/include"]
+        ignore line: [ignoring duplicate directory "/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include"]
+        ignore line: [ignoring duplicate directory "/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include"]
+        ignore line: [  as it is a non-system directory that duplicates a system directory]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include]
+        ignore line: [ /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++]
+        ignore line: [ /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/x86_64-conda-linux-gnu]
+        ignore line: [ /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++/backward]
+        ignore line: [ /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include]
+        ignore line: [ /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/include-fixed]
+        ignore line: [ /data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/include]
+        ignore line: [End of search list.]
+        ignore line: [Compiler executable checksum: 0f4abf5452fbb11bbb5a552109a0cc9e]
+        ignore line: [COMPILER_PATH=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/bin/]
+        ignore line: [LIBRARY_PATH=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-fvisibility-inlines-hidden' '-fmessage-length=0' '-march=nocona' '-mtune=haswell' '-ftree-vectorize' '-fPIC' '-fstack-protector-strong' '-fno-plt' '-O2' '-ffunction-sections' '-pipe' '-isystem' '/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include' '-v' '-o' 'CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-dumpdir' 'CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.']
+        ignore line: [Linking CXX executable cmTC_477cf]
+        ignore line: [/usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_477cf.dir/link.txt --verbose=1]
+        ignore line: [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++ -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include  -Wl -O2 -Wl --sort-common -Wl --as-needed -Wl -z relro -Wl -z now -Wl --disable-new-dtags -Wl --gc-sections -Wl --allow-shlib-undefined -Wl -rpath /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -Wl -rpath-link /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -v CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_477cf ]
+        ignore line: [Reading specs from /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/specs]
+        ignore line: [Reading specs from /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/conda.specs]
+        ignore line: [COLLECT_GCC=/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++]
+        ignore line: [COLLECT_LTO_WRAPPER=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/lto-wrapper]
+        ignore line: [Target: x86_64-conda-linux-gnu]
+        ignore line: [Configured with: ../configure --prefix=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho --with-slibdir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib --libdir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib --mandir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/share/man --build=x86_64-conda-linux-gnu --host=x86_64-conda-linux-gnu --target=x86_64-conda-linux-gnu --enable-languages=c c++ fortran objc obj-c++ --enable-libgomp --disable-libssp --enable-libquadmath --enable-libquadmath-support --disable-nls --disable-bootstrap --disable-multilib --enable-long-long --without-zstd --with-native-system-header-dir=/usr/include --with-gxx-include-dir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib/gcc/x86_64-conda-linux-gnu/14.3.0/include/c++ --with-gxx-libcxx-include-dir=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../include/c++/v1 --with-pkgversion='conda-forge gcc 14.3.0-18' --with-bugurl=https://github.com/conda-forge/ctng-compilers-feedstock/issues/new/choose --enable-libsanitizer --enable-default-pie --enable-threads=posix --enable-__cxa_atexit --with-sysroot=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeho/x86_64-conda-linux-gnu/sysroot --with-build-sysroot=/home/conda/feedstock_root/build_artifacts/gcc_compilers_1771374355041/_build_env/x86_64-conda-linux-gnu/sysroot --enable-plugin --enable-lto]
+        ignore line: [Thread model: posix]
+        ignore line: [Supported LTO compression algorithms: zlib]
+        ignore line: [gcc version 14.3.0 (conda-forge gcc 14.3.0-18) ]
+        ignore line: [COMPILER_PATH=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/bin/]
+        ignore line: [LIBRARY_PATH=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/../lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/:/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/:/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-fvisibility-inlines-hidden' '-fmessage-length=0' '-march=nocona' '-mtune=haswell' '-ftree-vectorize' '-fPIC' '-fstack-protector-strong' '-fno-plt' '-O2' '-ffunction-sections' '-pipe' '-isystem' '/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include' '-L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib' '-v' '-o' 'cmTC_477cf' '-shared-libgcc' '-dumpdir' 'cmTC_477cf.']
+        link line: [ /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/collect2 -disable-new-dtags -plugin /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/liblto_plugin.so -plugin-opt=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/lto-wrapper -plugin-opt=-fresolution=/tmp/ccA0Sb38.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --sysroot=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_477cf /data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/Scrt1.o /data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/crti.o /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtbeginS.o -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0 -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/../lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/../lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../.. -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib -L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib -O2 --sort-common --as-needed -z relro -z now --disable-new-dtags --gc-sections --allow-shlib-undefined -rpath /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -rpath-link /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtendS.o /data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/crtn.o -rpath /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -rpath-link /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/stubs -L /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+          arg [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/collect2] ==> ignore
+          arg [-disable-new-dtags] ==> ignore
+          arg [-plugin] ==> ignore
+          arg [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/liblto_plugin.so] ==> ignore
+          arg [-plugin-opt=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/lto-wrapper] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/ccA0Sb38.res] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [--sysroot=/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [-m] ==> ignore
+          arg [elf_x86_64] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+          arg [-pie] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_477cf] ==> ignore
+          arg [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/Scrt1.o] ==> obj [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/Scrt1.o]
+          arg [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/crti.o] ==> obj [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/crti.o]
+          arg [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtbeginS.o] ==> obj [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtbeginS.o]
+          arg [-L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+          arg [-L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0] ==> dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0]
+          arg [-L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc] ==> dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc]
+          arg [-L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib] ==> dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib]
+          arg [-L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib] ==> dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib]
+          arg [-L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/../lib] ==> dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/../lib]
+          arg [-L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../lib] ==> dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../lib]
+          arg [-L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/../lib] ==> dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/../lib]
+          arg [-L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib] ==> dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib]
+          arg [-L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+          arg [-L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+          arg [-L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib] ==> dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib]
+          arg [-L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../..] ==> dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../..]
+          arg [-L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib] ==> dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib]
+          arg [-L/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib] ==> dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib]
+          arg [-O2] ==> ignore
+          arg [--sort-common] ==> ignore
+          arg [--as-needed] ==> ignore
+          arg [-zrelro] ==> ignore
+          arg [-znow] ==> ignore
+          arg [--disable-new-dtags] ==> ignore
+          arg [--gc-sections] ==> ignore
+          arg [--allow-shlib-undefined] ==> ignore
+          arg [-rpath] ==> ignore
+          arg [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> ignore
+          arg [-rpath-link] ==> ignore
+          arg [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> ignore
+          arg [CMakeFiles/cmTC_477cf.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [-lstdc++] ==> lib [stdc++]
+          arg [-lm] ==> lib [m]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [-lc] ==> lib [c]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtendS.o] ==> obj [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtendS.o]
+          arg [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/crtn.o] ==> obj [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/crtn.o]
+          arg [-rpath] ==> ignore
+          arg [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> ignore
+          arg [-rpath-link] ==> ignore
+          arg [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> ignore
+          arg [-L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/stubs] ==> dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/stubs]
+          arg [-L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+        collapse obj [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/Scrt1.o] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/lib/Scrt1.o]
+        collapse obj [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/crti.o] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/lib/crti.o]
+        collapse obj [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtbeginS.o] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtbeginS.o]
+        collapse obj [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtendS.o] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtendS.o]
+        collapse obj [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib/crtn.o] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/lib/crtn.o]
+        collapse library dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+        collapse library dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0]
+        collapse library dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc]
+        collapse library dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib] ==> [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+        collapse library dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/../lib] ==> [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+        collapse library dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib/../lib] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/lib]
+        collapse library dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../lib] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib]
+        collapse library dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib/../lib] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/lib]
+        collapse library dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib/../lib] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/lib]
+        collapse library dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+        collapse library dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+        collapse library dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../../../x86_64-conda-linux-gnu/lib] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/lib]
+        collapse library dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.3.0/../../..] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/lib]
+        collapse library dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/lib] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/lib]
+        collapse library dir [/data/pgangwar/miniconda3/envs/ipynb-env/bin/../x86_64-conda-linux-gnu/sysroot/usr/lib] ==> [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/lib]
+        collapse library dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/stubs] ==> [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/stubs]
+        collapse library dir [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib] ==> [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib]
+        implicit libs: [stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+        implicit objs: [/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/lib/Scrt1.o;/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/lib/crti.o;/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtbeginS.o;/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0/crtendS.o;/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/lib/crtn.o]
+        implicit dirs: [/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib;/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc/x86_64-conda-linux-gnu/14.3.0;/data/pgangwar/miniconda3/envs/ipynb-env/lib/gcc;/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/lib;/data/pgangwar/miniconda3/envs/ipynb-env/lib;/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/lib;/data/pgangwar/miniconda3/envs/ipynb-env/x86_64-conda-linux-gnu/sysroot/usr/lib;/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib/stubs]
+        implicit fwks: []
+      
+      
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/usr/local/share/cmake-3.28/Modules/CheckCXXSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "/usr/local/share/cmake-3.28/Modules/FindThreads.cmake:99 (CHECK_CXX_SOURCE_COMPILES)"
+      - "/usr/local/share/cmake-3.28/Modules/FindThreads.cmake:163 (_threads_check_libc)"
+      - "/usr/local/share/cmake-3.28/Modules/FindProtobuf.cmake:541 (find_package)"
+      - "CMakeLists.txt:85 (find_package)"
+    directories:
+      source: "/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-xRaQo3"
+      binary: "/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-xRaQo3"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "-fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,--allow-shlib-undefined -Wl,-rpath,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -Wl,-rpath-link,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib"
+    buildResult:
+      variable: "CMAKE_HAVE_LIBC_PTHREAD"
+      cached: true
+      stdout: |
+        Change Dir: '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-xRaQo3'
+        
+        Run Build Command(s): /usr/local/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_151d5/fast
+        /usr/bin/make  -f CMakeFiles/cmTC_151d5.dir/build.make CMakeFiles/cmTC_151d5.dir/build
+        make[1]: Entering directory '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-xRaQo3'
+        Building CXX object CMakeFiles/cmTC_151d5.dir/src.cxx.o
+        /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++ -DCMAKE_HAVE_LIBC_PTHREAD  -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include  -std=gnu++17 -o CMakeFiles/cmTC_151d5.dir/src.cxx.o -c /home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-xRaQo3/src.cxx
+        Linking CXX executable cmTC_151d5
+        /usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_151d5.dir/link.txt --verbose=1
+        /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++ -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include  -Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,--allow-shlib-undefined -Wl,-rpath,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -Wl,-rpath-link,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib  CMakeFiles/cmTC_151d5.dir/src.cxx.o -o cmTC_151d5 
+        /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/ld: CMakeFiles/cmTC_151d5.dir/src.cxx.o: in function `main':
+        src.cxx:(.text.startup.main+0x22): undefined reference to `pthread_create'
+        /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/ld: src.cxx:(.text.startup.main+0x2c): undefined reference to `pthread_detach'
+        /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/ld: src.cxx:(.text.startup.main+0x36): undefined reference to `pthread_cancel'
+        /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/ld: src.cxx:(.text.startup.main+0x42): undefined reference to `pthread_join'
+        collect2: error: ld returned 1 exit status
+        make[1]: *** [CMakeFiles/cmTC_151d5.dir/build.make:99: cmTC_151d5] Error 1
+        make[1]: Leaving directory '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-xRaQo3'
+        make: *** [Makefile:127: cmTC_151d5/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CheckLibraryExists.cmake:69 (try_compile)"
+      - "/usr/local/share/cmake-3.28/Modules/FindThreads.cmake:112 (CHECK_LIBRARY_EXISTS)"
+      - "/usr/local/share/cmake-3.28/Modules/FindThreads.cmake:175 (_threads_check_lib)"
+      - "/usr/local/share/cmake-3.28/Modules/FindProtobuf.cmake:541 (find_package)"
+      - "CMakeLists.txt:85 (find_package)"
+    directories:
+      source: "/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-16hl33"
+      binary: "/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-16hl33"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "-fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,--allow-shlib-undefined -Wl,-rpath,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -Wl,-rpath-link,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib"
+    buildResult:
+      variable: "CMAKE_HAVE_PTHREADS_CREATE"
+      cached: true
+      stdout: |
+        Change Dir: '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-16hl33'
+        
+        Run Build Command(s): /usr/local/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_b4142/fast
+        /usr/bin/make  -f CMakeFiles/cmTC_b4142.dir/build.make CMakeFiles/cmTC_b4142.dir/build
+        make[1]: Entering directory '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-16hl33'
+        Building CXX object CMakeFiles/cmTC_b4142.dir/CheckFunctionExists.cxx.o
+        /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++   -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include -DCHECK_FUNCTION_EXISTS=pthread_create -std=gnu++17 -o CMakeFiles/cmTC_b4142.dir/CheckFunctionExists.cxx.o -c /home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-16hl33/CheckFunctionExists.cxx
+        Linking CXX executable cmTC_b4142
+        /usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b4142.dir/link.txt --verbose=1
+        /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++ -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include -DCHECK_FUNCTION_EXISTS=pthread_create -Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,--allow-shlib-undefined -Wl,-rpath,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -Wl,-rpath-link,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib  CMakeFiles/cmTC_b4142.dir/CheckFunctionExists.cxx.o -o cmTC_b4142  -lpthreads 
+        /data/pgangwar/miniconda3/envs/ipynb-env/bin/../libexec/gcc/x86_64-conda-linux-gnu/14.3.0/ld: cannot find -lpthreads: No such file or directory
+        collect2: error: ld returned 1 exit status
+        make[1]: *** [CMakeFiles/cmTC_b4142.dir/build.make:99: cmTC_b4142] Error 1
+        make[1]: Leaving directory '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-16hl33'
+        make: *** [Makefile:127: cmTC_b4142/fast] Error 2
+        
+      exitCode: 2
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/local/share/cmake-3.28/Modules/CheckLibraryExists.cmake:69 (try_compile)"
+      - "/usr/local/share/cmake-3.28/Modules/FindThreads.cmake:112 (CHECK_LIBRARY_EXISTS)"
+      - "/usr/local/share/cmake-3.28/Modules/FindThreads.cmake:176 (_threads_check_lib)"
+      - "/usr/local/share/cmake-3.28/Modules/FindProtobuf.cmake:541 (find_package)"
+      - "CMakeLists.txt:85 (find_package)"
+    directories:
+      source: "/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-rq8J83"
+      binary: "/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-rq8J83"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "-fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,--allow-shlib-undefined -Wl,-rpath,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -Wl,-rpath-link,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib"
+    buildResult:
+      variable: "CMAKE_HAVE_PTHREAD_CREATE"
+      cached: true
+      stdout: |
+        Change Dir: '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-rq8J83'
+        
+        Run Build Command(s): /usr/local/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_a81fa/fast
+        /usr/bin/make  -f CMakeFiles/cmTC_a81fa.dir/build.make CMakeFiles/cmTC_a81fa.dir/build
+        make[1]: Entering directory '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-rq8J83'
+        Building CXX object CMakeFiles/cmTC_a81fa.dir/CheckFunctionExists.cxx.o
+        /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++   -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include -DCHECK_FUNCTION_EXISTS=pthread_create -std=gnu++17 -o CMakeFiles/cmTC_a81fa.dir/CheckFunctionExists.cxx.o -c /home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-rq8J83/CheckFunctionExists.cxx
+        Linking CXX executable cmTC_a81fa
+        /usr/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a81fa.dir/link.txt --verbose=1
+        /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/bin/g++ -fvisibility-inlines-hidden -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/include -DCHECK_FUNCTION_EXISTS=pthread_create -Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now -Wl,--disable-new-dtags -Wl,--gc-sections -Wl,--allow-shlib-undefined -Wl,-rpath,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -Wl,-rpath-link,/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib -L/home/pgangwar@AD.UCSD.EDU/miniconda3/envs/ipynb-env/lib  CMakeFiles/cmTC_a81fa.dir/CheckFunctionExists.cxx.o -o cmTC_a81fa  -lpthread 
+        make[1]: Leaving directory '/home/pgangwar@AD.UCSD.EDU/FutureCoV/scripts/build/CMakeFiles/CMakeScratch/TryCompile-rq8J83'
+        
+      exitCode: 0
+...

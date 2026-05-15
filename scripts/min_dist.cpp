@@ -1,4 +1,4 @@
-// Minimum mutation (Hamming) distance from each future Sequence_ID to the nearest sequence in the current set. 
+// Minimum mutation (Hamming) distance from each future Sequence_ID to the nearest sequence in the current set.
 
 #include <arrow/io/api.h>
 #include <parquet/column_reader.h>

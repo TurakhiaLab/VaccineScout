@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(min_dist LANGUAGES CXX)
+project(future_cov_min_dist LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,20 +22,19 @@ find_package(TBB REQUIRED CONFIG)
 find_package(Arrow REQUIRED CONFIG)
 find_package(Parquet REQUIRED CONFIG)
 
-add_executable(min_dist min_dist.cpp)
-
-set_target_properties(min_dist PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-)
-
-target_link_libraries(min_dist PRIVATE
-  TBB::tbb
-  Arrow::arrow_shared
-  Parquet::parquet_shared
-)
-
-if(MSVC)
-  target_compile_options(min_dist PRIVATE /W4)
-else()
-  target_compile_options(min_dist PRIVATE -Wall -Wextra -O3)
-endif()
+foreach(_tgt IN ITEMS min_dist pairwise_dist)
+  add_executable(${_tgt} ${_tgt}.cpp)
+  set_target_properties(${_tgt} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+  )
+  target_link_libraries(${_tgt} PRIVATE
+    TBB::tbb
+    Arrow::arrow_shared
+    Parquet::parquet_shared
+  )
+  if(MSVC)
+    target_compile_options(${_tgt} PRIVATE /W4)
+  else()
+    target_compile_options(${_tgt} PRIVATE -Wall -Wextra -O3)
+  endif()
+endforeach()

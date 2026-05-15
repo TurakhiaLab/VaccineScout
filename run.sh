@@ -31,6 +31,11 @@ jupyter lab --no-browser --port=8888
 
 
 # 1. Run get_amino_acid_mutations_of_sequences.py 
-# 2. Run create_from_chronumental_data.ipynb
-# 3. Run new_mutations_cumulative.ipynb
-# 4. 
+# 2. Run lineage_spike_from_mat.py
+# 3. Run create_from_chronumental_data.ipynb
+# 4. Run new_mutations_cumulative.ipynb
+# 5. Run new_mutations_fitness.ipynb
+# 6. Run scout_selection.ipynb
+
+
+#python3 scripts/lineage_spike_from_mat.py --mat /data/sukhanna/MPP/gisaidAndPublic.2025-09-01.masked.pb.gz --reference ../WBE-LLM/SARS2-WBE/test/NC_045512v2.fa --lineages B,B.1.1.529,BA.1,BA.4,BA.5,XBB.1.5,JN.1 --output data/vaccine_recommendations.pkl

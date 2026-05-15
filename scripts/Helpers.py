@@ -575,14 +575,19 @@ def find_anchor_remainder_reverse(node_path, nodes_before_cutoff):
 
 def get_mutations_from_remainder(anchor_remainder, mutations_lookup):
     """
-    Collect all spike mutation strings along the remainder path (nodes after the anchor),
-    in path order (root-to-tip along remainder). Lookup values that are a single string
-    are treated as one field; ``;``-separated tokens are split into separate entries.
-    No per-site deduplication—every token from every node is kept.
+    Collect spike mutation strings along the remainder path (nodes after the anchor).
+    Nodes are walked from tip toward anchor (``reversed`` remainder order) so mutations
+    nearer the leaf win when the same site appears multiple times.
+
+    Lookup values that are a single string are treated as one field; ``;``-separated
+    tokens are split into separate entries. Per-site deduplication: after a site is
+    represented once (via ``get_mutation_pattern``), later tokens for that site are
+    skipped. Tokens that do not match the ``S:X###Y`` pattern dedupe by full string.
     """
     remainder_nodes = anchor_remainder[1]
     mutations = []
-    for node in remainder_nodes:
+    covered_keys = set()
+    for node in reversed(remainder_nodes):
         muts = mutations_lookup.get(node, [])
         if isinstance(muts, str):
             muts = [muts]
@@ -593,6 +598,12 @@ def get_mutations_from_remainder(anchor_remainder, mutations_lookup):
                 continue
             for piece in str(mut).split(";"):
                 piece = piece.strip()
-                if piece:
-                    mutations.append(piece)
+                if not piece:
+                    continue
+                _, site, _ = get_mutation_pattern(piece)
+                key = site if site != 0 else piece
+                if key in covered_keys:
+                    continue
+                covered_keys.add(key)
+                mutations.append(piece)
     return mutations

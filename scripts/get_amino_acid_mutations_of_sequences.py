@@ -89,11 +89,13 @@ def write_reference_spike_genome_fasta(refseq: str, output_path: str) -> str:
     the same directory as the Parquet path given by ``--output-mutations``.
     """
     start_1b, end_1b = GENE_TO_POSITION["S"]
-    spike_nt = refseq[start_1b - 1 : end_1b]
+    # GFF end is inclusive and covers the stop codon; omit last 3 nt for protein.
+    cds_end_1b = end_1b - 3
+    spike_nt = refseq[start_1b - 1 : cds_end_1b]
     spike_aa = translate_dna_to_aa(spike_nt)
     with open(output_path, "w", encoding="utf-8") as out:
         out.write(
-            f">S|reference|protein|len={len(spike_aa)}|cds_nt={start_1b}-{end_1b}\n"
+            f">S|reference|protein|len={len(spike_aa)}|cds_nt={start_1b}-{cds_end_1b}\n"
         )
         out.write(spike_aa + "\n")
     return output_path

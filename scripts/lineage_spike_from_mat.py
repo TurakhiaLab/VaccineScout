@@ -41,7 +41,7 @@ from Helpers import apply_mutations_flat_list, get_mutation_pattern  # noqa: E40
 
 def ref_spike_amino_acids(refseq: str) -> str:
     start_1b, end_1b = gaam.GENE_TO_POSITION["S"]
-    spike_nt = refseq[start_1b - 1 : end_1b]
+    spike_nt = refseq[start_1b - 1 : end_1b - 3]  # omit terminal stop codon
     return gaam.translate_dna_to_aa(spike_nt)
 
 

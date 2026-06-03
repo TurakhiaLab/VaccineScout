@@ -436,22 +436,88 @@ def add_fitness_scores_eve(df, score_dict: dict):
     df["Fitness_Score_eve"] = fitness_scores
     return df
 
+
+def build_oracle_current_rankings(
+    current_seq_df: pd.DataFrame,
+    future_seq_dfs: dict,
+    random_state: int = None,
+) -> dict:
+    """
+    Build one oracle ranking of the current sequences per future window.
+
+    For each future slice:
+    1. Sort future sequences by ``Tip_Count`` descending.
+    2. Keep those present in the current pool (deduplicated) — this order is the
+       oracle ranking of current sequences (highest future tips first).
+    3. Append the remaining current sequences (absent from this future slice) in
+       random order at the end, so the full current pool is ranked for plotting.
+
+    Args:
+        current_seq_df (pd.DataFrame): Current sequences with a 'Sequence_ID' column.
+        future_seq_dfs (dict): Mapping time_key -> future DataFrame with 'Sequence_ID'
+                               and 'Tip_Count' columns.
+        random_state (int, optional): Seed for shuffling the appended remainder.
+
+    Returns:
+        dict: Mapping time_key -> current_seq_df copy reordered into oracle rank,
+              with an added 'Future_Tip_Count' column.
+    """
+    rng = np.random.default_rng(random_state)
+    current_ids = set(current_seq_df["Sequence_ID"])
+    oracle_rankings = {}
+
+    for time_key, future_df in future_seq_dfs.items():
+        future_sorted = future_df.sort_values("Tip_Count", ascending=False)
+        oracle_ids = (
+            future_sorted.loc[
+                future_sorted["Sequence_ID"].isin(current_ids), "Sequence_ID"
+            ]
+            .drop_duplicates()
+            .tolist()
+        )
+        oracle_id_set = set(oracle_ids)
+
+        remaining_ids = [
+            seq_id
+            for seq_id in current_seq_df["Sequence_ID"]
+            if seq_id not in oracle_id_set
+        ]
+        rng.shuffle(remaining_ids)
+        ordered_ids = oracle_ids + remaining_ids
+
+        ranked = (
+            current_seq_df.set_index("Sequence_ID")
+            .loc[ordered_ids]
+            .reset_index()
+        )
+        future_tip_map = future_df.set_index("Sequence_ID")["Tip_Count"]
+        ranked["Future_Tip_Count"] = ranked["Sequence_ID"].map(future_tip_map).fillna(0)
+        oracle_rankings[time_key] = ranked
+
+    return oracle_rankings
+
+
 def compute_cumulative_tip_percentages_fast(
     current_seq_df: pd.DataFrame,
     future_seq_dfs: dict,
+    oracle_rankings: dict = None,
     max_rank: int = None
 ) -> dict:
     """
     Compute cumulative percentages of future tips captured by top-ranked sequences.
 
-    For each ranking method (PyR₀, EVEscape, CoVFit, Tip Count), this function calculates
-    the cumulative fraction of future sequence tips captured when selecting the top
-    sequences ranked by fitness or abundance.
+    For each ranking method (PyR₀, EVEscape, CoVFit, Tip Count, Oracle), this function
+    calculates the cumulative fraction of future sequence tips captured when selecting
+    the top sequences ranked by fitness, abundance, or oracle future-tip order among
+    sequences present in the current pool.
 
     Args:
         current_seq_df (pd.DataFrame): DataFrame of current sequences with fitness scores.
         future_seq_dfs (dict): Dictionary mapping time keys to DataFrames of future sequences
                                with 'Sequence_ID' and 'Tip_Count' columns.
+        oracle_rankings (dict, optional): Mapping time_key -> oracle-ranked current_seq_df
+                               (from ``build_oracle_current_rankings``). When provided, adds
+                               an 'oracle' ranking method.
         max_rank (int, optional): Maximum number of top sequences to consider. Defaults to all.
 
     Returns:
@@ -475,6 +541,8 @@ def compute_cumulative_tip_percentages_fast(
             "covfit": current_full.sort_values("fitness_mean", ascending=False),
             "tip_count": current_full.sort_values("Tip_Count", ascending=False),
         }
+        if oracle_rankings is not None and time_key in oracle_rankings:
+            rank_methods["oracle"] = oracle_rankings[time_key]
 
         # --- Compute cumulative percentages ---
         for method_key, ranked_df in rank_methods.items():
@@ -553,9 +621,13 @@ def build_node_path(sample_id, parent_lookup):
     path = []
     current_node = sample_id
     # Keep moving up the tree until no parent is found or root (assuming root has None or missing parent)
-    while current_node in parent_lookup and parent_lookup[current_node] is not None:
+    while current_node not in (None, 'NULL'):
         path.append(current_node)
+        if current_node not in parent_lookup:
+            print(f"\nMissing '{current_node}' in database\n")
+            break
         current_node = parent_lookup[current_node]
+        
     # Add the root node (which has no parent)
     path.append(current_node)
     # Reverse to get path from root -> sample_id

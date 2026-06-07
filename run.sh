@@ -34,13 +34,14 @@ jupyter lab --no-browser --port=8888
 
 # https://github.com/TheSatoLab/CoVFit/blob/main/CoVFit_CLI/ReadMe.md
 # chronumental --tree /home/pgangwar@AD.UCSD.EDU/WBE-LLM/SARS2-WBE/gisaidAndPublic.2025-09-01.masked.nwk.gz --reference_node 'CHN/Wuhan_IME-WH01/2019|MT291826.1|2019-12-30'  --dates /home/pgangwar@AD.UCSD.EDU/WBE-LLM/SARS2-WBE/gisaidAndPublic.2025-09-01.metadata.tsv.gz --only_use_full_dates --steps 2000 --use_gpu
-# 1. Run get_amino_acid_mutations_of_sequences.py 
-# 2. Run lineage_spike_from_mat.py
-# 3. Run create_from_chronumental_data.ipynb
-# 4. Run rank_analysis.ipynb
-# 5. Run new_mutations_cumulative.ipynb
-# 6. Run new_mutations_fitness.ipynb
-# 7. Run scout_selection.ipynb
+# 1. Run get_amino_acid_mutations_of_sequences.py
+# 2. Run get_lineage_fasta.py
+# 3. Run lineage_spike_from_mat.py
+# 4. Run create_from_chronumental_data.ipynb
+# 5. Run rank_analysis.ipynb
+# 6. Run new_mutations_cumulative.ipynb
+# 7. Run new_mutations_fitness.ipynb
+# 8. Run scout_selection.ipynb
 
 
 #python3 scripts/lineage_spike_from_mat.py --mat /data/sukhanna/MPP/gisaidAndPublic.2025-09-01.masked.pb.gz --reference ../WBE-LLM/SARS2-WBE/test/NC_045512v2.fa --lineages B,B.1.1.529,BA.1,BA.4,BA.5,XBB.1.5,JN.1 --output data/vaccine_recommendations.pkl

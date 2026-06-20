@@ -1,10 +1,70 @@
 import re
+import sys
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 from Bio import SeqIO
 from typing import *
 
 SPIKE_AA_SUB_RE = re.compile(r"^S:([A-Za-z*])(\d+)([A-Za-z*])")
+
+
+def patch_numpy2_unpickle_compat() -> None:
+    """Register NumPy 1.x aliases so pickles saved with NumPy 2.x can be loaded."""
+    import importlib
+    import numpy.core as _core
+
+    sys.modules.setdefault("numpy._core", _core)
+
+    for sub in ("numeric", "multiarray", "umath", "_multiarray_umath", "_dtype", "fromnumeric"):
+        name = f"numpy._core.{sub}"
+        if name in sys.modules:
+            continue
+        try:
+            sys.modules[name] = importlib.import_module(f"numpy.core.{sub}")
+        except ModuleNotFoundError:
+            mod = getattr(_core, sub, None)
+            if mod is not None:
+                sys.modules[name] = mod
+
+    if not any(type(f).__name__ == "_NumpyCoreCompatFinder" for f in sys.meta_path):
+        class _NumpyCoreCompatFinder:
+            """Map numpy._core.* imports to numpy.core.* on NumPy 1.x."""
+
+            def find_module(self, fullname, path=None):
+                if fullname == "numpy._core" or fullname.startswith("numpy._core."):
+                    return self
+
+            def load_module(self, fullname):
+                if fullname in sys.modules:
+                    return sys.modules[fullname]
+                legacy = fullname.replace("numpy._core", "numpy.core", 1)
+                mod = importlib.import_module(legacy)
+                sys.modules[fullname] = mod
+                return mod
+
+        sys.meta_path.insert(0, _NumpyCoreCompatFinder())
+
+
+_ORIGINAL_READ_PICKLE = pd.read_pickle
+
+
+def read_pickle(path, *args, **kwargs) -> pd.DataFrame:
+    """Load a pickle, including files written with NumPy 2.x on NumPy 1.x."""
+    patch_numpy2_unpickle_compat()
+    return _ORIGINAL_READ_PICKLE(path, *args, **kwargs)
+
+
+def _read_pickle_with_numpy_compat(path, *args, **kwargs):
+    patch_numpy2_unpickle_compat()
+    return _ORIGINAL_READ_PICKLE(path, *args, **kwargs)
+
+
+pd.read_pickle = _read_pickle_with_numpy_compat
+
+# Pickles in this project were often saved with NumPy 2.x; keep NumPy 1.x for JAX.
+patch_numpy2_unpickle_compat()
 
 def split_circulating_and_future(
     df: pd.DataFrame,

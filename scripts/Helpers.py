@@ -476,7 +476,7 @@ def compute_fitness_score_eve(mutations: tuple, score_dict: dict) -> float:
     return score
 
 
-def add_fitness_scores_eve(df, score_dict: dict):
+def add_fitness_scores_eve(df, score_dict: dict, mutations_col: str = "Mutations"):
     """
     Add EVE fitness scores to a DataFrame.
 
@@ -484,13 +484,15 @@ def add_fitness_scores_eve(df, score_dict: dict):
     fitness scores for each sequence.
 
     Args:
-        df (pd.DataFrame): DataFrame containing a 'Mutations' column.
+        df (pd.DataFrame): DataFrame containing the mutations column.
         score_dict (dict): Mapping from mutation site+AA string (e.g. '###Y') to fitness score.
+        mutations_col (str): Column holding the mutation tuples. Use this when the
+            mutations have been re-expressed against a non-Wuhan backbone.
 
     Returns:
         pd.DataFrame: Copy of input DataFrame with an added 'Fitness_Score_eve' column.
     """
-    fitness_scores = [compute_fitness_score_eve(muts, score_dict) for muts in df["Mutations"]]
+    fitness_scores = [compute_fitness_score_eve(muts, score_dict) for muts in df[mutations_col]]
 
     df = df.copy()
     df["Fitness_Score_eve"] = fitness_scores
@@ -635,47 +637,20 @@ def compute_auc_for_rank_results(rank_results: dict) -> dict:
 
     for time_key, df in rank_results.items():
         max_rank = df["Rank"].max()
+        tip_cols = [col for col in df.columns if col.startswith("%_tips_")]
         auc_dict[time_key] = {}
 
-        for col in df.columns:
-            if col.startswith("%_tips_"):
-                method = col.replace("%_tips_", "")
-                auc = np.trapz(df[col], df["Rank"])
-                auc_normalized = auc / max_rank  # normalize to 0–1
-                auc_dict[time_key][method] = auc_normalized
+        for col in tip_cols:
+            method = col.replace("%_tips_", "")
+            auc = np.trapz(df[col], df["Rank"])
+            # The curve is already a fraction of the window's total future tips,
+            # so the reference is the rectangle of height 1 spanning the rank
+            # axis -- every future sequence captured at every rank. Its area is
+            # max_rank, which puts the result on a 0-1 scale.
+            auc_normalized = auc / max_rank
+            auc_dict[time_key][method] = auc_normalized
 
     return auc_dict
-
-def compute_auc_ceil_fraction(current_seq_df: pd.DataFrame, future_seq_dfs: dict) -> dict:
-    """
-    Compute normalized AUC ceiling for each time slice.
-
-    Logic:
-    1. Consider all current sequences.
-    2. Sum all future tips corresponding to these sequences.
-    3. Normalize by the total future tips in that slice to get a fraction (0–1).
-    4. This fraction is assigned to the first rank; normalized AUC = fraction.
-
-    Args:
-        current_seq_df (pd.DataFrame): DataFrame with 'Sequence_ID' of current sequences.
-        future_seq_dfs (dict): Dictionary mapping time_key -> DataFrame with 'Sequence_ID' and 'Tip_Count'.
-
-    Returns:
-        dict: Mapping time_key -> normalized AUC ceiling (0–1).
-    """
-    auc_ceil_dict = {}
-
-    current_ids = set(current_seq_df["Sequence_ID"])
-
-    for time_key, future_df in future_seq_dfs.items():
-        # Sum only tips that correspond to current sequences
-        valid_tips = future_df.loc[future_df["Sequence_ID"].isin(current_ids), "Tip_Count"].sum()
-        total_tips = future_df["Tip_Count"].sum()
-
-        # Normalized fraction, 0–1
-        auc_ceil_dict[time_key] = valid_tips / total_tips if total_tips > 0 else 0.0
-
-    return auc_ceil_dict
 
 def build_node_path(sample_id, parent_lookup):
     path = []

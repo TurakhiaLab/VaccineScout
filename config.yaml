@@ -1,0 +1,190 @@
+# ============================================================================
+# VaccineScout configuration
+#
+# Every script and notebook in scripts/ reads its paths and run parameters from
+# this file via scripts/config_loader.py. Point `data_root` to your own data 
+# directory and the whole pipeline follows. 
+#
+# Resolution rules:
+#   * `~` and $ENV_VARS are expanded in every path value.
+#   * Absolute paths are used as-is.
+#   * Relative paths are resolved against the repository root (the directory
+#     holding this file).
+#   * Override the config location entirely with $VACCINESCOUT_CONFIG.
+# ============================================================================
+
+paths:
+  # Directory holding the large generated artefacts.
+  data_root: data_test
+
+  # Third-party checkouts, relative to the repo root unless absolute.
+  # Directory holding the prebuilt `covfit_cli` binary. Download and extract:
+  #   https://zenodo.org/records/14438178/files/covfit_cli_20241007.tar.gz
+  # The archive expands to CoVFit_CLI/ — extract at the repo root 
+  covfit_cli: ./CoVFit_CLI
+  # https://github.com/broadinstitute/pyro-cov
+  pyro_cov: ./pyro-cov         
+
+  # Where the compiled min_dist / pairwise_dist binaries land (CMake writes
+  # them next to their sources).
+  bin_dir: scripts
+
+  # FASTAs for vaccine sequences are present here.
+  pfizer_dir: data_test/Pfizer
+
+# ---------------------------------------------------------------------------
+# Filenames inside paths.data_root. Override any single entry without touching
+# the rest of the pipeline.
+# ---------------------------------------------------------------------------
+files:
+  final_df: final_df.parquet
+  sequence_dict: sequence_dict.parquet
+  mutation_path_dict: mutation_path_dict.parquet
+  ref_spike_genome: ref_spike_genome.fa
+  parent_node: parent_node.csv
+
+  # Full 29903 bp SARS-CoV-2 reference GENOME (NC_045512v2 / Wuhan-Hu-1), used
+  # for nucleotide -> amino-acid translation. NOT ref_spike_genome, which is the
+  # 1273 aa Spike *protein* FASTA.
+  reference: NC_045512v2.fa
+
+  # --- Tree inputs. Replace all four together when moving to a newer tree. ---
+  mat: gisaidAndPublic.2025-09-01.masked.pb.gz          # UShER MAT, steps 1-3
+  tree_newick: gisaidAndPublic.2025-09-01.masked.nwk.gz # chronumental input
+  metadata: gisaidAndPublic.2025-09-01.metadata.tsv     # chronumental input
+
+  # chronumental output. The pipeline passes this to `--dates_out` explicitly,
+  # so the name is whatever you set here. 
+  chronumental_dates: chronumental_dates_gisaidAndPublic.2025-09-01.metadata.tsv
+
+  node_spike_cumulative: all_nodes_spike_2025-09-01.parquet
+  node_spike_branch: all_nodes_spike_2025-09-01_branch.parquet
+
+  # Spike sequences of the FDA-recommended strains, from lineage_spike_from_mat.py
+  fda_recommendations: fda_recommendations.pkl
+  lineage_spike_fasta: lineage_spike.fasta
+
+  # Distance files
+  pairwise_dist: pairwise_dist.parquet
+  current_id_to_seq: current_id_to_seq.parquet
+  current_seq_mutation_sites: current_sequence_mutation_sites.parquet
+
+  # FASTAs written for CoVFit scoring
+  # circulating cohort, written by rank_analysis.ipynb
+  rank_current_fasta: current_seq_df.fasta
+  # circulating cohort, written by scout_selection.ipynb
+  vaccinescout_current_fasta: vaccinescout_current_seq_df.fasta
+  # the FDA-recommended strain sequences (from files.fda_recommendations),
+  # written out so CoVFit can score them alongside the VaccineScout medoids
+  fda_strains_fasta: fda_strains.fasta
+
+# ---------------------------------------------------------------------------
+# Fitness model inputs
+# ---------------------------------------------------------------------------
+fitness:
+  # PyR0 release data under <data_root>/pyro_ver/<version>/PyroSpike.pkl
+  pyro_subdir: pyro_ver
+  pyro_version: Jan_4_24
+  pyro_spike_filename: PyroSpike.pkl
+  # Raw PyR0 mutation table consumed by pyro_aug.ipynb:
+  #   <data_root>/<pyro_subdir>/<pyro_version>/mutations.tsv
+  pyro_mutations_filename: mutations.tsv
+
+  # Column CoVFit predictions are read from.
+  fitness_column: fitness_mean
+
+# ---------------------------------------------------------------------------
+# CoVFit CLI invocation
+# ---------------------------------------------------------------------------
+covfit:
+  executable: ./covfit_cli
+  fold: 3
+  batch_size: 16
+  use_gpu: true
+  # Output subdirectories under <data_root>/<cutoff_date>/
+  current_subdir: current_covfit
+  fda_subdir: fda_covfit
+  pfizer_subdir: pfizer_covfit
+
+# ---------------------------------------------------------------------------
+# Chronumental (step 0): infers dates for every tree node. You can skip it if
+# you want to infer dates from haplotype names instead. Consumed by 
+# scripts/run_mat_pipeline.sh.
+# ---------------------------------------------------------------------------
+chronumental:
+  # Set to false to skip step 0 entirely. Do that only if you then use
+  # create_from_metadata.ipynb (step 5b) instead of
+  # create_from_chronumental_data.ipynb (step 5a).
+  run: true
+
+  reference_node: 'CHN/Wuhan_IME-WH01/2019|MT291826.1|2019-12-30'
+  steps: 2000
+  use_gpu: true
+
+# ---------------------------------------------------------------------------
+# Analysis parameters
+# ---------------------------------------------------------------------------
+analysis:
+  # Nodes dated outside it are dropped by create_from_chronumental_data.ipynb, 
+  # so every later step sees only this window.
+  start_date: '2020-01-01'
+  end_date: '2025-09-01'
+
+  # UPDATE ----> To select a different analysis date 
+  # Default cutoff date. Notebooks read this; override in-notebook to sweep.
+  cutoff_date: '2024-06-01'
+
+  # UPDATE ----> When selecting a different analysis date 
+  # Options include EVEscore_Wuhan_A, EVEscore_Omicron_BA.4, EVEscore_Omicron_XBB.
+  # EVEscape score table under <data_root>/EVEscape/<eve_backbone>.
+  eve_subdir: EVEscape
+  eve_backbone: EVEscore_Omicron_XBB
+
+  # split_circulating_and_future() arguments
+  left_buffer_days: 4
+  right_buffer_days: 4
+  circulation_months: null
+  circulation_days: 30
+  future_months: 12
+  future_days: null
+
+  # Future-window slicing
+  disjoint_windows: ['6M_1', '6M_2']
+
+  # Sequences seen on fewer than this many tips are dropped before ranking and
+  # medoid selection.
+  min_tip_count: 5
+
+  # VaccineScout Fitness weighting exponent
+  beta: 60
+
+# ---------------------------------------------------------------------------
+# Per-cutoff reference vaccine strains
+# ---------------------------------------------------------------------------
+vaccines:
+  fda_strain_by_cutoff:
+    '2021-06-01': B
+    '2022-06-01': BA.4
+    '2023-06-01': XBB.1.5
+    '2024-06-01': KP.2
+  pfizer_inn_by_cutoff:
+    '2021-06-01': Tozinameran
+    '2022-06-01': Famtozinameran
+    '2023-06-01': Raxtozinameran
+    '2024-06-01': Cemivameran
+  pfizer_fasta_by_cutoff:
+    '2021-06-01': tozinameran_2021_aa_modified.fa
+    '2022-06-01': famtozinameran_2022_aa_nodel_modified.fa
+    '2023-06-01': raxtozinameran_2023_aa_nodel_modified.fa
+    '2024-06-01': cemivameran_2024_aa_noindel_modified.fa
+
+# ---------------------------------------------------------------------------
+# Defaults for the MAT command-line scripts. Every one of these remains
+# overridable with the corresponding CLI flag; the flag always wins.
+# ---------------------------------------------------------------------------
+mat_scripts:
+  # Lineages exported by lineage_spike_from_mat.py into files.fda_recommendations
+  lineages: B,B.1.1.529,BA.1,BA.4,BA.5,XBB.1.5,JN.1,KP.2,KP.3
+
+  # Index into node.annotations holding the Pango label on UShER trees.
+  annotation_index: 1

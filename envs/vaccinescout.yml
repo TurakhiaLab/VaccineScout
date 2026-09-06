@@ -1,0 +1,57 @@
+# VaccineScout — single environment for the entire pipeline.
+#
+#   conda env create -f envs/vaccinescout.yml
+#   conda activate vaccinescout
+#
+# Covers all eight steps: the three `bte` MAT scripts, the notebooks, and the
+# C++ helpers (min_dist / pairwise_dist).
+#
+# ---------------------------------------------------------------------------
+# bte MUST be >= 0.9.3. This is a correctness pin, not a packaging preference.
+# ---------------------------------------------------------------------------
+# bte 0.9.0's get_haplotype() is wrong where a genomic position is mutated more
+# than once along a root->node path: it returns the FIRST mutation instead of
+# the net state. Verified against the branch mutations on the tree itself:
+#
+name: vaccinescout
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - python=3.10
+
+  # --- MAT access (steps 1-3) ---------------------------------------------
+  - bte>=0.9.3
+
+  # --- core analysis stack -------------------------------------------------
+  - numpy=1.26.*
+  - pandas
+  - scipy
+  - matplotlib-base
+  - seaborn
+  - tqdm
+  - biopython
+  - pyyaml            # required to read config.yaml
+  - openpyxl          # .xlsx report export
+
+  # --- Parquet I/O: Python bindings plus the C++ headers the build needs ---
+  # libarrow 18+ requires libprotobuf >= 5, while bte caps protobuf below 5.
+  - pyarrow>=17,<18
+  - libarrow>=17,<18
+  - libparquet>=17,<18
+
+  # --- C++ build toolchain -------------------------------------------------
+  # Activating this env sets $CXX / $CC to the triplet-prefixed compilers;
+  # there is no bare `g++` in $CONDA_PREFIX/bin.
+  - cmake>=3.16
+  - make
+  - gxx_linux-64
+  # Range dictated by bte (tbb >=2020.2,<2021); stated explicitly so the
+  # resolution is the same on any machine. 
+  - tbb-devel>=2020.2,<2021
+
+  # --- notebook front-end --------------------------------------------------
+  - jupyterlab
+  - ipykernel
+  - ipywidgets

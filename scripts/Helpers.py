@@ -140,48 +140,6 @@ def split_circulating_and_future(
     return current_df, future_df
 
 
-def slice_by_cumulative_windows(
-    future_df: pd.DataFrame,
-    cumulative_windows: List[str]
-) -> Dict[str, pd.DataFrame]:
-    """
-    Slice the future dataframe into cumulative time windows by month length.
-
-    Parameters
-    ----------
-    future_df : pd.DataFrame
-        Dataframe containing a 'Date' column representing the future period.
-    cumulative_windows : list of str
-        List of month-window strings (e.g. ['3M', '6M', '9M', '12M']).
-
-    Returns
-    -------
-    dict of {str: pd.DataFrame}
-        Dictionary mapping each cumulative window string to the corresponding sliced dataframe.
-    """
-    # Ensure the Date column is datetime
-    if not pd.api.types.is_datetime64_any_dtype(future_df["Date"]):
-        future_df = future_df.copy()
-        future_df["Date"] = pd.to_datetime(future_df["Date"])
-
-    # Get the start date of future_df (minimum date)
-    start_date = future_df["Date"].min()
-
-    slices_dict = {}
-    for window_str in cumulative_windows:
-        # Extract the number of months as integer (e.g. '3M' -> 3)
-        months = int(window_str.rstrip('M'))
-
-        # Calculate end date for this cumulative window
-        end_date = start_date + pd.DateOffset(months=months)
-
-        # Slice the dataframe between start_date and end_date (cumulative)
-        sliced_df = future_df[(future_df["Date"] >= start_date) & 
-                              (future_df["Date"] < end_date)]
-        slices_dict[window_str] = sliced_df
-
-    return slices_dict
-
 def slice_by_disjoint_windows(
     future_df: pd.DataFrame,
     disjoint_windows: List[str]

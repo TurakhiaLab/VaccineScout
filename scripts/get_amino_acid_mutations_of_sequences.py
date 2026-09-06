@@ -17,8 +17,17 @@ Usage:
         --mat <path/to/tree.pb[.gz]> \\
         --reference <path/to/reference.fasta>
 
-This script expects the `pyro-cov` repository to be checked out in the current
-working directory so that the `pyrocov` package can be imported from it.
+Every argument defaults to the matching entry in ``config.yaml`` at the repo
+root (``files.node_spike_cumulative``, ``files.parent_node``, ``files.mat`` and
+``files.reference``), so the command above can usually be shortened to::
+
+    python scripts/get_amino_acid_mutations_of_sequences.py
+
+An explicit flag always overrides the configured value.
+
+The `pyro-cov` repository must be checked out where ``paths.pyro_cov`` in
+``config.yaml`` points (the repo root by default) so that the `pyrocov` package
+can be imported from it.
 """
 import argparse
 import csv
@@ -32,20 +41,54 @@ import bte
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-REF_SPIKE_GENOME_FILENAME = "ref_spike_genome.fa"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from config_loader import load_config_optional  # noqa: E402
+
+# Config is optional here: every value below can still be supplied by flag, so
+# the script runs in a minimal environment that lacks PyYAML or config.yaml.
+CFG, CFG_ERROR = load_config_optional()
+
+REF_SPIKE_GENOME_FILENAME = (
+    os.path.basename(str(CFG.section("files").get("ref_spike_genome",
+                                                  "ref_spike_genome.fa")))
+    if CFG is not None
+    else "ref_spike_genome.fa"
+)
+
+
+def _pyrocov_candidates():
+    """Directories that may hold the `pyro-cov` checkout, best first."""
+    candidates = []
+    if CFG is not None:
+        candidates.append(str(CFG.pyro_cov_dir))
+    candidates.append(os.path.join(os.getcwd(), "pyro-cov"))
+    # Repo root, i.e. the parent of scripts/, for runs launched from anywhere.
+    candidates.append(
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                     "pyro-cov")
+    )
+    seen, unique = set(), []
+    for candidate in candidates:
+        if candidate not in seen:
+            seen.add(candidate)
+            unique.append(candidate)
+    return unique
 
 
 def _ensure_pyrocov_on_path():
     """Add the local `pyro-cov` checkout to sys.path so `pyrocov` can be imported."""
-    pyrocov_root = os.path.join(os.getcwd(), "pyro-cov")
-    if not os.path.isdir(os.path.join(pyrocov_root, "pyrocov")):
-        raise FileNotFoundError(
-            f"Could not find the 'pyrocov' package under '{pyrocov_root}'. "
-            "Please clone https://github.com/broadinstitute/pyro-cov into the "
-            "current working directory."
-        )
-    if pyrocov_root not in sys.path:
-        sys.path.insert(0, pyrocov_root)
+    candidates = _pyrocov_candidates()
+    for pyrocov_root in candidates:
+        if os.path.isdir(os.path.join(pyrocov_root, "pyrocov")):
+            if pyrocov_root not in sys.path:
+                sys.path.insert(0, pyrocov_root)
+            return
+    raise FileNotFoundError(
+        "Could not find the 'pyrocov' package. Looked in:\n  "
+        + "\n  ".join(candidates)
+        + "\nClone https://github.com/broadinstitute/pyro-cov, then point "
+          "`paths.pyro_cov` in config.yaml at it."
+    )
 
 
 _ensure_pyrocov_on_path()
@@ -249,7 +292,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "-o",
         "--output-mutations",
-        required=True,
+        default=None,
         dest="output_mutations",
         help=(
             "Parquet path for cumulative haplotype (sample_id, aa_mutations Spike-only). "
@@ -258,7 +301,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output-parent-child",
-        required=True,
+        default=None,
         metavar="PATH",
         dest="output_parent_child",
         help=(
@@ -268,15 +311,54 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--mat",
-        required=True,
+        default=None,
         help="Path to the Mutation Annotated Tree (MAT) protobuf file.",
     )
     parser.add_argument(
         "--reference",
-        required=True,
+        default=None,
         help="Path to the SARS-CoV-2 reference fasta (29903 bp).",
     )
-    return parser.parse_args()
+    return _apply_config_defaults(parser.parse_args())
+
+
+def _apply_config_defaults(args: argparse.Namespace) -> argparse.Namespace:
+    """
+    Fill unset arguments from config.yaml.
+
+    An explicit flag always wins. If a value is neither given nor derivable
+    from the config, the error names both the flag and the config key.
+    """
+    defaults = {
+        "output_mutations": ("files.node_spike_cumulative",
+                             lambda c: c.file("node_spike_cumulative")),
+        "output_parent_child": ("files.parent_node",
+                                lambda c: c.file("parent_node")),
+        "mat": ("files.mat", lambda c: c.file("mat")),
+        "reference": ("files.reference", lambda c: c.file("reference")),
+    }
+
+    missing = []
+    for dest, (config_key, getter) in defaults.items():
+        if getattr(args, dest, None):
+            continue
+        value = None
+        if CFG is not None:
+            try:
+                value = getter(CFG)
+            except Exception:  # noqa: BLE001 - fall through to the error below
+                value = None
+        if value:
+            setattr(args, dest, str(value))
+        else:
+            flag = "--" + dest.replace("_", "-")
+            missing.append(f"{flag} (or set {config_key} in config.yaml)")
+
+    if missing:
+        detail = "" if CFG is not None else f"\nConfig unavailable: {CFG_ERROR}"
+        raise SystemExit("Missing required input(s):\n  " + "\n  ".join(missing) + detail)
+
+    return args
 
 
 def main():

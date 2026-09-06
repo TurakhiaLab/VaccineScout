@@ -38,11 +38,15 @@ for _p in (_script_dir, _repo_root):
         sys.path.insert(0, str(_p))
 
 import get_amino_acid_mutations_of_sequences as gaam  # noqa: E402
+from config_loader import load_config_optional  # noqa: E402
 from Helpers import apply_mutations_flat_list, getReference  # noqa: E402
 from lineage_spike_from_mat import (  # noqa: E402
     lineage_from_node,
     sort_spike_mutations,
 )
+
+# Optional: every value below can still be supplied by flag.
+CFG, CFG_ERROR = load_config_optional()
 
 
 def spike_mutations_at_node(tree: bte.MATree, refseq: str, node_id: str) -> List[str]:
@@ -134,7 +138,10 @@ def write_lineage_spike_fasta(
 
 
 def parse_args() -> argparse.Namespace:
-    default_ref_spike = _repo_root / "data" / "ref_spike_genome.fa"
+    if CFG is not None:
+        default_ref_spike = CFG.file("ref_spike_genome")
+    else:
+        default_ref_spike = _repo_root / "data" / "ref_spike_genome.fa"
 
     p = argparse.ArgumentParser(
         description=(
@@ -142,10 +149,10 @@ def parse_args() -> argparse.Namespace:
             "→ lineage_spike.fasta."
         )
     )
-    p.add_argument("--mat", required=True, help="Mutation Annotated Tree (.pb / .pb.gz).")
+    p.add_argument("--mat", default=None, help="Mutation Annotated Tree (.pb / .pb.gz).")
     p.add_argument(
         "--reference",
-        required=True,
+        default=None,
         help="Full SARS-CoV-2 reference FASTA (29903 bp) for nt→AA translation.",
     )
     p.add_argument(
@@ -155,8 +162,11 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--output-dir",
-        required=True,
-        help="Directory for lineage_spike.fasta.",
+        default=None,
+        help=(
+            "Directory for lineage_spike.fasta "
+            "(default: the directory of files.lineage_spike_fasta)."
+        ),
     )
     p.add_argument(
         "--lineages",
@@ -172,10 +182,49 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--annotation-index",
         type=int,
-        default=1,
+        default=None,
         help="Index into node.annotations for the lineage label (default: 1).",
     )
-    return p.parse_args()
+    return _apply_config_defaults(p.parse_args())
+
+
+def _apply_config_defaults(args: argparse.Namespace) -> argparse.Namespace:
+    """Fill unset arguments from config.yaml; an explicit flag always wins."""
+    if args.annotation_index is None:
+        args.annotation_index = (
+            CFG.get("mat_scripts", "annotation_index", 1) if CFG is not None else 1
+        )
+
+    defaults = {
+        "mat": ("files.mat", lambda c: c.file("mat")),
+        "reference": ("files.reference", lambda c: c.file("reference")),
+        # Defaults to the directory of files.lineage_spike_fasta, so redirecting
+        # that one key moves the output without touching paths.data_root.
+        "output_dir": ("files.lineage_spike_fasta",
+                       lambda c: c.file("lineage_spike_fasta").parent),
+    }
+
+    missing = []
+    for dest, (config_key, getter) in defaults.items():
+        if getattr(args, dest, None):
+            continue
+        value = None
+        if CFG is not None:
+            try:
+                value = getter(CFG)
+            except Exception:  # noqa: BLE001
+                value = None
+        if value:
+            setattr(args, dest, str(value))
+        else:
+            flag = "--" + dest.replace("_", "-")
+            missing.append(f"{flag} (or set {config_key} in config.yaml)")
+
+    if missing:
+        detail = "" if CFG is not None else f"\nConfig unavailable: {CFG_ERROR}"
+        raise SystemExit("Missing required input(s):\n  " + "\n  ".join(missing) + detail)
+
+    return args
 
 
 def load_wanted_lineages(args: argparse.Namespace) -> Optional[Set[str]]:

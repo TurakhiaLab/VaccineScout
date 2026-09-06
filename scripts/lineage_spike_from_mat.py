@@ -36,7 +36,11 @@ if str(_script_dir) not in sys.path:
 # pyro-cov path + translation helpers (loads pyrocov from ./pyro-cov)
 import get_amino_acid_mutations_of_sequences as gaam  # noqa: E402
 
+from config_loader import load_config_optional  # noqa: E402
 from Helpers import apply_mutations_flat_list, get_mutation_pattern  # noqa: E402
+
+# Optional: every value below can still be supplied by flag.
+CFG, CFG_ERROR = load_config_optional()
 
 
 def ref_spike_amino_acids(refseq: str) -> str:
@@ -125,16 +129,16 @@ def parse_args() -> argparse.Namespace:
             "lineages defined on internal MAT nodes (clade_annotations)."
         )
     )
-    p.add_argument("--mat", required=True, help="Mutation Annotated Tree (.pb / .pb.gz).")
+    p.add_argument("--mat", default=None, help="Mutation Annotated Tree (.pb / .pb.gz).")
     p.add_argument(
         "--reference",
-        required=True,
+        default=None,
         help="SARS-CoV-2 reference FASTA (29903 bp, same as get_amino_acid_mutations_of_sequences.py).",
     )
     p.add_argument(
         "--output",
-        required=True,
-        help="Output path for pickle (pandas DataFrame).",
+        default=None,
+        help="Output path for pickle (default: files.fda_recommendations).",
     )
     p.add_argument(
         "--lineages",
@@ -150,7 +154,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--annotation-index",
         type=int,
-        default=1,
+        default=None,
         help=(
             "Index into node.annotations / clade_annotations for the lineage label "
             "(default: 1, typical Pango field on dual-annotated UShER trees)."
@@ -169,14 +173,57 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Add node_id column (MAT internal node name).",
     )
-    return p.parse_args()
+    return _apply_config_defaults(p.parse_args())
+
+
+def _apply_config_defaults(args: argparse.Namespace) -> argparse.Namespace:
+    """Fill unset arguments from config.yaml; an explicit flag always wins."""
+    if args.annotation_index is None:
+        args.annotation_index = (
+            CFG.get("mat_scripts", "annotation_index", 1) if CFG is not None else 1
+        )
+    if not args.lineages and not args.lineages_file and CFG is not None:
+        args.lineages = CFG.get("mat_scripts", "lineages")
+
+    defaults = {
+        "mat": ("files.mat", lambda c: c.file("mat")),
+        "reference": ("files.reference", lambda c: c.file("reference")),
+        "output": ("files.fda_recommendations",
+                   lambda c: c.file("fda_recommendations")),
+    }
+
+    missing = []
+    for dest, (config_key, getter) in defaults.items():
+        if getattr(args, dest, None):
+            continue
+        value = None
+        if CFG is not None:
+            try:
+                value = getter(CFG)
+            except Exception:  # noqa: BLE001
+                value = None
+        if value:
+            setattr(args, dest, str(value))
+        else:
+            flag = "--" + dest.replace("_", "-")
+            missing.append(f"{flag} (or set {config_key} in config.yaml)")
+
+    if missing:
+        detail = "" if CFG is not None else f"\nConfig unavailable: {CFG_ERROR}"
+        raise SystemExit("Missing required input(s):\n  " + "\n  ".join(missing) + detail)
+
+    return args
 
 
 def main() -> None:
     args = parse_args()
 
     if not args.lineages and not args.lineages_file:
-        print("Provide --lineages and/or --lineages-file.", file=sys.stderr)
+        print(
+            "Provide --lineages and/or --lineages-file, "
+            "or set mat_scripts.lineages in config.yaml.",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
     wanted: Set[str] = set()

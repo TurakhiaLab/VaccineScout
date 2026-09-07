@@ -183,6 +183,19 @@ class Config:
         value = Path(_expand(files[key]))
         return value if value.is_absolute() else (self.data_root / value)
 
+    def cohort_file(self, cutoff_date: str, key: str, create: bool = False) -> Path:
+        """
+        A ``files:`` entry that belongs to one cutoff, not to the data root.
+
+        The circulating cohort is rebuilt for every ``cutoff_date``, so files
+        describing it (pairwise distances, the id->sequence map, the mutation
+        sites) are per-cutoff. They resolve to 
+        ``<data_root>/<cutoff_date>/<filename>``.
+        """
+        return self.cutoff_dir(cutoff_date, create=create) / Path(
+            str(self.section("files")[key])
+        ).name
+
     def binary(self, name: str) -> Path:
         """Path to a compiled helper (``min_dist`` / ``pairwise_dist``)."""
         candidate = self.path("bin_dir") / name
@@ -247,13 +260,15 @@ class Config:
     # -- CoVFit -------------------------------------------------------------
     def covfit_outdir(self, cutoff_date: str, kind: str = "current",
                       create: bool = True) -> Path:
-        """Output directory for a CoVFit run (``current``/``vaccine``/``pfizer``)."""
+        """Output directory for a CoVFit run (``current``/``fda``/``pfizer``)."""
         key = f"{kind}_subdir"
         subdir = self.get("covfit", key)
         if subdir is None:
+            known = sorted(k[:-len("_subdir")] for k in self.section("covfit")
+                           if k.endswith("_subdir"))
             raise KeyError(
                 f"covfit.{key} is not defined in {self.config_path}. "
-                "Expected one of kind='current'|'vaccine'|'pfizer'."
+                f"Configured kinds: {'|'.join(known) or 'none'}."
             )
         directory = self.cutoff_dir(cutoff_date, create=create) / subdir
         if create:
@@ -421,6 +436,9 @@ CRITICAL_PATHS = ("data_root", "pyro_cov", "covfit_cli", "pfizer_dir", "bin_dir"
 #: ``files:`` keys that are inputs rather than pipeline products.
 CRITICAL_FILES = ("reference", "mat", "tree_newick", "metadata")
 
+#: ``files:`` entries that live under <data_root>/<cutoff_date>/, not the root.
+COHORT_FILES = ("pairwise_dist", "current_id_to_seq", "current_seq_mutation_sites")
+
 #: Which step writes each remaining ``files:`` entry.
 PRODUCED_BY = {
     "chronumental_dates":         "step 0  chronumental",
@@ -488,11 +506,16 @@ def _audit_rows(cfg: "Config"):
     except Exception as exc:  # noqa: BLE001
         generated.append(("PyR0 spike pickle", f"unresolved: {exc}", None))
 
+    cutoff = cfg.cutoff_date
     for key in cfg.section("files"):
         if key in CRITICAL_FILES:
             continue
-        generated.append((key, PRODUCED_BY.get(key, "not written by any known step"),
-                          cfg.file(key)))
+        note = PRODUCED_BY.get(key, "not written by any known step")
+        if key in COHORT_FILES:
+            note += f" [per-cutoff, shown for {cutoff}]"
+            generated.append((key, note, cfg.cohort_file(cutoff, key)))
+        else:
+            generated.append((key, note, cfg.file(key)))
     # Pipeline order reads better than alphabetical; the step labels sort into it,
     # and anything unrecognised falls to the end.
     generated.sort(key=lambda row: (row[1].startswith("step") is False, row[1], row[0]))

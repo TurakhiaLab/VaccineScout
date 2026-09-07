@@ -118,20 +118,16 @@ python -m ipykernel install --user \
 
 ## <a name="config"></a> Configuration
 
-Every path and run parameter lives in **`config.yaml`** at the repository root.
-No script or notebook hardcodes a location; they all read this file through
-`scripts/config_loader.py`.
-
-Print the resolved configuration and check which inputs are present:
+Every path and run parameter lives in **`config.yaml`** at the repository root,
+which are read through `scripts/config_loader.py`. Print the current 
+configuration and check which inputs are present:
 
 ```bash
 python scripts/config_loader.py
 ```
 
-Run it first whenever something cannot be found. Output is split in two, because
-`MISSING` means very different things in each half:
-
-* **CRITICAL** — inputs the pipeline reads: the data root and third-party 
+Output is split in two groups:
+* **CRITICAL** — pipeline input files: the data root and third-party 
   checkouts, the reference genome, the MAT/Newick/metadata files, the
   PyR<sub>0</sub> and EVEscape tables, the Pfizer FASTA, and the 
   `covfit_cli` / `min_dist` / `pairwise_dist` executables. Anything
@@ -149,8 +145,8 @@ Two distinct references are easy to confuse:
 ## <a name="pipeline"></a> Running the Pipeline
 
 Run the ten steps in this order. All of them run in the single
-`vaccinescout` environment. Steps 5a and 5b are alternatives — run one, not both;
-they build the same three files from two different sources of dates.
+`vaccinescout` environment. Steps 5a and 5b are alternatives, which
+build the same three files using two different sources of dates.
 
 | # | Step | Reads | Writes | 
 | --- | --- | --- | --- |
@@ -159,7 +155,7 @@ they build the same three files from two different sources of dates.
 | 2 | `get_lineage_fasta.py` | `files.mat`, `files.reference`, `files.ref_spike_genome` | `files.lineage_spike_fasta` |
 | 3 | `lineage_spike_from_mat.py` | `files.mat`, `files.reference`, `mat_scripts.lineages` | `files.fda_recommendations` |
 | 4 | `pyro_aug.py` | PyR<sub>0</sub> `mutations.tsv` | PyR<sub>0</sub> Spike pickle (`fitness.pyro_spike_filename`) |
-| 5a | `create_from_chronumental_data.ipynb` | `files.node_spike_cumulative`, `files.chronumental_dates` | `files.final_df`, `files.sequence_dict`, `files.mutation_path_dict` |
+| 5a | `create_from_chronumental_data.ipynb` (recommended) | `files.node_spike_cumulative`, `files.chronumental_dates` | `files.final_df`, `files.sequence_dict`, `files.mutation_path_dict` |
 | 5b | `create_from_metadata.ipynb` *(alternative to 5a — dates from haplotype names)* | `files.node_spike_cumulative` | same three files as 5a |
 | 6 | `rank_analysis.ipynb` | `final_df`, `sequence_dict`, PyR<sub>0</sub>, EVEscape, CoVFit | `<cutoff>/overlap.svg` |
 | 7 | `new_mutations_cumulative.ipynb` | `final_df`, `sequence_dict`, `min_dist` | `<cutoff>/dist_*.csv`, `new_mutations.svg` |
@@ -167,7 +163,7 @@ they build the same three files from two different sources of dates.
 | 9 | `scout_selection.ipynb` | everything above, `pairwise_dist`, CoVFit | `scout_medoid_report.*`, medoid plots |
 
 
-### Steps 0–4 — tree dating, MAT processing and the PyR<sub>0</sub> table
+### Steps 0–4 — tree node dating, MAT processing, and building the PyR<sub>0</sub> table
 
 All five run from one driver script, which reads `config.yaml`:
 
@@ -183,9 +179,10 @@ repeat, or run them individually as documented below.
 The rest of this section documents each step individually, for when you want to
 run one on its own or override a path.
 
-**Step 0 — Date every node on the tree** with
-[Chronumental](https://github.com/theosanderson/chronumental). Step 5a needs this
-result, while its alternate, step 5b does not.
+**Step 0** — Date every node on the tree with
+[Chronumental](https://github.com/theosanderson/chronumental). 
+
+Step 5a needs this result, while its alternate, step 5b does not.
 
 Arguments:
 | Flag | Config default | Meaning |
@@ -202,7 +199,8 @@ instead. Set `chronumental.run: false` in `config.yaml` and run **step 5b**
 (`create_from_metadata.ipynb`) rather than step 5a. But it will prevent you 
 from running `Step 8 - new_mutations_fitness` that requires dates for internal nodes.
 
-**Step 1 — Spike amino-acid mutations for every node.**
+**Step 1** — Spike amino-acid mutations for every node.
+
 Walks the tree in depth-first order and writes, per node, the cumulative mutations
 for the haplotype and the branch-only mutations, plus the parent<->child list. Also
 writes the reference Spike protein FASTA next to the mutations Parquet.
@@ -219,7 +217,8 @@ Arguments:
 | `-o`, `--output-mutations` | `files.node_spike_cumulative` | Cumulative-haplotype Parquet. `<stem>_branch<suffix>` is written alongside. |
 | `--output-parent-child` | `files.parent_node` | Edge-list CSV; the root's parent is the literal `NULL`. |
 
-**Step 2 — Spike sequence per lineage.**
+**Step 2** — Spike sequence per lineage.
+
 Finds each lineage root, translates its cumulative haplotype to Spike AA calls,
 merges lineages sharing an identical mutation set, and writes them as a single
 FASTA (headers join merged lineages with `|`).
@@ -239,7 +238,8 @@ Arguments:
 | `--lineages-file` | *(none)* | Optional file, one lineage per line (`#` comments allowed). |
 | `--annotation-index` | `mat_scripts.annotation_index` | Which `node.annotations` entry holds the Pango label. |
 
-**Step 3 — Spike sequences for the vaccine reference strains.**
+**Step 3** — Spike sequences for the vaccine reference strains.
+
 Same translation, restricted to the lineages you want to compare VaccineScout's selections
 against, saved as a pandas pickle.
 
@@ -259,7 +259,8 @@ Arguments:
 | `--all-matches` | off | Emit every matching node, not just the first DFS hit per lineage. |
 | `--with-node-id` | off | Add the MAT internal node name as a column. |
 
-**Step 4 — PyR<sub>0</sub> Spike score table.**
+**Step 4** — PyR<sub>0</sub> Spike score table.
+
 The PyR<sub>0</sub> release only scores the substitutions it observed, but the
 later notebooks need a score for any substitution they meet at a Spike site. This
 exapnds the table by including every inverse mutation (`S:XnY` → `S:YnX`, 
@@ -278,16 +279,15 @@ Arguments:
 | `-o`, `--output` | `fitness.pyro_spike_filename` | Output pickle (`PyroSpike.pkl`). |
 | `--summary` | off | Also print the per-site table (count and score range per Spike site). |
 
-### Steps 5–9 — Notebooks
+### Steps 5–9 — Jupyter Notebooks
 
 ```bash
 jupyter lab --no-browser --port=8888
 ```
 
 Run the notebooks in `scripts/` in this order:
-1. `create_from_chronumental_data` (step 5a) **or** `create_from_metadata` (5b)
-   — 5b needs no `chronumental` run, but choosing it also rules out step 8; see
-   step 0
+1. `create_from_chronumental_data` (step 5a) or `create_from_metadata` (5b)
+   — 5b needs no `chronumental` run, but choosing it also rules out step 8
 2. `rank_analysis`                                            (step 6)
 3. `new_mutations_cumulative`                                 (step 7)
 4. `new_mutations_fitness`                                    (step 8)
@@ -327,25 +327,18 @@ scripts/
 
 ## <a name="troubleshooting"></a> Troubleshooting
 
-**`Could not find 'config.yaml'`** — run from inside the repository, or set
+1. `Could not find 'config.yaml'` — run from inside the repository, or set
 `$VACCINESCOUT_CONFIG` to its absolute path.
 
-**`min_dist not found` / `pairwise_dist not found`** — the binaries were never
+2. `min_dist not found` / `pairwise_dist not found` — the binaries were never
 built, or `paths.bin_dir` is wrong. See [step 3](#build).
 
-**`Could not find the 'pyrocov' package`** — clone `pyro-cov` and point
+3. `Could not find the 'pyrocov' package` — clone `pyro-cov` from [step 1](#clone) and point
 `paths.pyro_cov` at it.
 
-**`chronumental: command not found`** — it is not part of
-`envs/vaccinescout.yml`; install it separately.
+4. `chronumental: command not found` — install it by following [step 2](#envs).
 
-**`--use_gpu` runs on CPU** — check with
-`python -c "import jax; print(jax.devices())"`. `[CpuDevice(id=0)]` means you
-have the CPU `jaxlib`; install the CUDA wheel as above. Note that chronumental
-reports `Platform: cpu` for any command line without `--use_gpu`, including
-`--help`, which is expected.
-
-**`covfit_cli` not found, or CoVFit steps fail immediately** — the notebooks run
+5. `covfit_cli` not found, or CoVFit steps fail immediately — the notebooks run
 `./covfit_cli` with the working directory set to `paths.covfit_cli`. 
 
 ##  <a name="cite"></a> Citing VaccineScout

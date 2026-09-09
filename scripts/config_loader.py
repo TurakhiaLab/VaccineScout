@@ -452,11 +452,11 @@ PRODUCED_BY = {
     "sequence_dict":              "step 5  create_from_chronumental_data.ipynb",
     "mutation_path_dict":         "step 5  create_from_chronumental_data.ipynb",
     "rank_current_fasta":         "step 6  rank_analysis.ipynb",
-    "current_id_to_seq":          "step 9  scout_selection.ipynb",
-    "current_seq_mutation_sites": "step 9  scout_selection.ipynb",
-    "pairwise_dist":              "step 9  scout_selection.ipynb (pairwise_dist)",
-    "vaccinescout_current_fasta": "step 9  scout_selection.ipynb",
-    "fda_strains_fasta":          "step 9  scout_selection.ipynb",
+    "current_id_to_seq":          "step 9  vaccinescout_selection.ipynb",
+    "current_seq_mutation_sites": "step 9  vaccinescout_selection.ipynb",
+    "pairwise_dist":              "step 9  vaccinescout_selection.ipynb (pairwise_dist)",
+    "vaccinescout_current_fasta": "step 9  vaccinescout_selection.ipynb",
+    "fda_strains_fasta":          "step 9  vaccinescout_selection.ipynb",
 }
 
 

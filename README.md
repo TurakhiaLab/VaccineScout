@@ -1,6 +1,7 @@
 <div align="center">
 
-# VaccineScout
+# VaccineScout: Computational Framework for Determining SARS-CoV-2 Vaccine Composition
+
 
 [license-badge]: https://img.shields.io/badge/License-MIT-yellow.svg 
 [license-link]: https://github.com/TurakhiaLab/VaccineScout/blob/main/LICENSE
@@ -160,7 +161,7 @@ build the same three files using two different sources of dates.
 | 6 | `rank_analysis.ipynb` | `final_df`, `sequence_dict`, PyR<sub>0</sub>, EVEscape, CoVFit | `<cutoff>/overlap.svg` |
 | 7 | `new_mutations_cumulative.ipynb` | `final_df`, `sequence_dict`, `min_dist` | `<cutoff>/dist_*.csv`, `new_mutations.svg` |
 | 8 | `new_mutations_fitness.ipynb` | `final_df`, `parent_node`, `node_spike_branch` | `<cutoff>/fitness.svg` |
-| 9 | `scout_selection.ipynb` | everything above, `pairwise_dist`, CoVFit | `scout_medoid_report.*`, medoid plots |
+| 9 | `vaccinescout_selection.ipynb` | everything above, `pairwise_dist`, CoVFit | `scout_medoid_report.*`, medoid plots |
 
 
 ### Steps 0–4 — tree node dating, MAT processing, and building the PyR<sub>0</sub> table
@@ -291,7 +292,7 @@ Run the notebooks in `scripts/` in this order:
 2. `rank_analysis`                                            (step 6)
 3. `new_mutations_cumulative`                                 (step 7)
 4. `new_mutations_fitness`                                    (step 8)
-5. `scout_selection`                                          (step 9)
+5. `vaccinescout_selection`                                   (step 9)
 
 `pyro_aug.py` is not in this list: it is step 4, a command-line script already
 run by `scripts/run_mat_pipeline.sh`.

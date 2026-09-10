@@ -353,6 +353,26 @@ python scripts/vaccinescout_results_across_years.py --cutoff-dates 2024-06-01 --
 python scripts/vaccinescout_results_across_years.py --plot-dir figures/
 ```
 
+### `plot_lineage_proportions.py` — monthly lineage abundance figure
+
+This requires `files.mat` to plot the monthly proportion of circulating Pango 
+lineages as a stacked bar chart, with one bar per month and each lineage 
+represented by a different color. Lineages with identical spike protein 
+sequences are combined, such as `BA.4/BA.5`. . The plot is written to 
+`<paths.data_root>/lineage_proportions.svg`. The `--start`/`--end` options 
+bound the plotting window, defaulting to `analysis.start_date`/`end_date`.
+See `--help` for the full list of options.
+
+```bash
+python scripts/plot_lineage_proportions.py
+
+# cache the extracted counts once
+python scripts/plot_lineage_proportions.py --counts-out counts.tsv
+
+# then replot from the cache as many times as you like
+python scripts/plot_lineage_proportions.py --counts-in counts.tsv
+```
+
 ## <a name="layout"></a> Repository Layout
 
 ```text
@@ -370,6 +390,7 @@ scripts/
   vaccinescout_results_across_years.py       Step 9 across every cutoff and beta
                                              -> vaccinescout_medoid_report.xlsx
                                                 and plots
+  plot_lineage_proportions.py                MAT -> monthly lineage abundance figure
   min_dist.cpp / pairwise_dist.cpp           Hamming distance kernels
   CMakeLists.txt
   *.ipynb                    Analysis notebooks (see the table above)

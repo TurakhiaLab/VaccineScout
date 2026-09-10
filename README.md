@@ -145,9 +145,10 @@ Two distinct references are easy to confuse:
 
 ## <a name="pipeline"></a> Running the Pipeline
 
-Run the ten steps in this order. All of them run in the single
+Run the eleven steps in this order. All of them run in the single
 `vaccinescout` environment. Steps 5a and 5b are alternatives, which
-build the same three files using two different sources of dates.
+build the same three files using two different sources of dates. Step 10 is a
+command-line script, not a notebook.
 
 | # | Step | Reads | Writes | 
 | --- | --- | --- | --- |
@@ -161,7 +162,8 @@ build the same three files using two different sources of dates.
 | 6 | `rank_analysis.ipynb` | `final_df`, `sequence_dict`, PyR<sub>0</sub>, EVEscape, CoVFit | `<cutoff>/overlap.svg` |
 | 7 | `new_mutations_cumulative.ipynb` | `final_df`, `sequence_dict`, `min_dist` | `<cutoff>/dist_*.csv`, `new_mutations.svg` |
 | 8 | `new_mutations_fitness.ipynb` | `final_df`, `parent_node`, `node_spike_branch` | `<cutoff>/fitness.svg` |
-| 9 | `vaccinescout_selection.ipynb` | everything above, `pairwise_dist`, CoVFit | `scout_medoid_report.*`, medoid plots |
+| 9 | `vaccinescout_selection.ipynb` | everything above, `pairwise_dist`, CoVFit | medoids + distances for one `analysis.cutoff_date` |
+| 10 | `vaccinescout_results_across_years.py` | the same inputs, for every cutoff in `vaccines.fda_strain_by_cutoff` | `vaccinescout_medoid_report.xlsx`, `vaccinescout_medoid_report_plots/` |
 
 
 ### Steps 0–4 — tree node dating, MAT processing, and building the PyR<sub>0</sub> table
@@ -307,6 +309,50 @@ cp config.yaml config-2023.yaml     # set analysis.cutoff_date: '2023-06-01'
 VACCINESCOUT_CONFIG=$PWD/config-2023.yaml jupyter lab
 ```
 
+### Step 10 — `vaccinescout_results_across_years.py`
+
+Step 9 selects medoids for the one cutoff date in `analysis.cutoff_date`. This step
+runs that same selection non-interactively for **each** cutoff in
+`vaccines.fda_strain_by_cutoff` and across a sweep of `beta`, then collects the
+results to create cumulative set of figures. It is produces the
+cross-year comparison against the FDA and Pfizer strains.
+
+For each (cutoff date, beta) pair and each K in 1-8 it selects the medoids and
+their lineages, the CoVFit fitness, the weighted distance to the sequences
+circulating at the cutoff, and the distance to the sequences that appeared
+0-6 and 6-12 months later. It compares the selected medoids on these metrics with
+the FDA-recommended strain, the Pfizer vaccine strain, and an *oracle* medoid set 
+chosen with hindsight from the true future prevalence.
+
+```bash
+conda activate vaccinescout
+python scripts/vaccinescout_results_across_years.py
+```
+
+```text
+vaccinescout_medoid_report.xlsx   one sheet per cutoff date, one column block per beta
+vaccinescout_medoid_report_plots/
+  distance_to_future_0_6_vs_k.svg     scout vs oracle vs FDA/Pfizer, K = 1-8
+  distance_to_future_6_12_vs_k.svg    same, for the later horizon
+  distance_to_current_vs_k.svg        weighted distance to circulating variants
+  distance_to_future_vs_beta_<cutoff>.svg   one file per cutoff, K = 1-4
+```
+
+A full run scores every cutoff year with CoVFit and rebuilds the pairwise distance
+matrices, which is slow. To re-run on existing intermediates, or to narrow the
+sweep:
+
+```bash
+# reuse existing CoVFit predictions and pairwise_dist
+python scripts/vaccinescout_results_across_years.py --skip-covfit --skip-pairwise
+
+# one cutoff, one beta
+python scripts/vaccinescout_results_across_years.py --cutoff-dates 2024-06-01 --betas 60
+
+# plots somewhere else
+python scripts/vaccinescout_results_across_years.py --plot-dir figures/
+```
+
 ## <a name="layout"></a> Repository Layout
 
 ```text
@@ -321,6 +367,9 @@ scripts/
   get_lineage_fasta.py                       MAT -> lineage_spike.fasta
   lineage_spike_from_mat.py                  MAT -> FDA strain sequences
   pyro_aug.py                                PyR0 mutations.tsv -> Spike pickle
+  vaccinescout_results_across_years.py       Step 9 across every cutoff and beta
+                                             -> vaccinescout_medoid_report.xlsx
+                                                and plots
   min_dist.cpp / pairwise_dist.cpp           Hamming distance kernels
   CMakeLists.txt
   *.ipynb                    Analysis notebooks (see the table above)

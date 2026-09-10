@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
-Run scout_selection-style medoid analysis across cutoff dates and BETA values,
+Run vaccinescout_selection-style medoid analysis across cutoff dates and BETA values,
 then export an Excel report with medoid lineages, fitness scores, and distances.
-
-Derived from scripts/scout_selection.ipynb.
 """
 
 from __future__ import annotations
@@ -26,53 +24,52 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
 sys.path.insert(0, str(SCRIPT_DIR))
 
+from config_loader import load_config  # noqa: E402
 from Helpers import (  # noqa: E402
     add_fitness_scores_pyro,
     add_mutations_column,
-    compute_fitness_score_pyro,
-    compute_mutations,
-    getReference,
     read_pickle,
     slice_by_disjoint_windows,
     split_circulating_and_future,
 )
 
-ROOT_PATH_DEFAULT = "/data/pgangwar/vaccinescout/data/"
-CUTOFF_DATES_DEFAULT = ["2021-06-01", "2022-06-01", "2023-06-01", "2024-06-01"]
+# config.yaml is the single source of truth: every path and analysis parameter
+# below is read from it, with no in-file defaults. A missing or malformed config
+# is a hard error rather than a silent fall back to stale literals.
+CFG = load_config()
+
+ROOT_PATH_DEFAULT = str(CFG.data_root)
+CUTOFF_DATES_DEFAULT = sorted(CFG.section("vaccines").get("fda_strain_by_cutoff", {}))
+FITNESS_COLUMN = str(CFG.fitness_column)
+MIN_TIP_COUNT = CFG.min_tip_count
+DISJOINT_WINDOWS = list(CFG.disjoint_windows)
+# "Distance to Current" is a scout-only column: every scout beta block reports it
+# under that block's own beta. FDA, Pfizer and oracle rows leave it blank (see
+# write_reference_vaccine_row / write_oracle_k_block for why).
+#
+# This constant is not used to compute anything here. It names the beta block the
+# downstream plot scripts should read when they draw a single distance-to-current
+# curve: plot_scout_medoid_report.load_current_distance_beta() resolves it.
+CURRENT_DISTANCE_BETA = CFG.beta
+PYRO_VER = str(CFG.pyro_version)
+
+# Report-only knobs. These describe the sweep this script performs, not the
+# pipeline's data, so they have no config.yaml entry; override with the CLI.
 BETAS_DEFAULT = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-FITNESS_COLUMN = "fitness_mean"
-MIN_TIP_COUNT = 5
-CIRCULATION_DAYS = 30
-DISJOINT_WINDOWS = ["6M_1", "6M_2"]
 K_VALUES = [1, 2, 3, 4, 5, 6, 7, 8]
-CURRENT_DISTANCE_BETA = 60
-PYRO_VER = "Jan_4_24"
-BLOCK_COLS = 9
+BLOCK_COLS = 8
 BLOCK_GUTTER = 1
 
-FDA_STRAINS_BY_CUTOFF = {
-    "2021-06-01": "B",
-    "2022-06-01": "BA.4",
-    "2023-06-01": "XBB.1.5",
-    "2024-06-01": "KP.2",
-}
+# Per-cutoff reference strains, straight from the `vaccines:` block of
+# config.yaml. Adding a cutoff there is all that is needed.
+FDA_STRAINS_BY_CUTOFF = dict(CFG.section("vaccines")["fda_strain_by_cutoff"])
+PFIZER_INN_BY_CUTOFF = dict(CFG.section("vaccines")["pfizer_inn_by_cutoff"])
+PFIZER_FASTA_BY_CUTOFF = dict(CFG.section("vaccines")["pfizer_fasta_by_cutoff"])
 
-PFIZER_INN_BY_CUTOFF = {
-    "2021-06-01": "Tozinameran",
-    "2022-06-01": "Famtozinameran",
-    "2023-06-01": "Raxtozinameran",
-    "2024-06-01": "Cemivameran",
-}
 
-PFIZER_FASTA_BY_CUTOFF = {
-    "2021-06-01": "tozinameran_2021_aa_modified.fa",
-    "2022-06-01": "famtozinameran_2022_aa_nodel_modified.fa",
-    "2023-06-01": "raxtozinameran_2023_aa_nodel_modified.fa",
-    "2024-06-01": "cemivameran_2024_aa_noindel_modified.fa",
-}
+
 
 
 EXCEL_COLUMNS = [
@@ -81,7 +78,6 @@ EXCEL_COLUMNS = [
     "Medoids",
     "Lineages",
     "CoVFit Fitness",
-    "PyR0 Fitness",
     "Distance to Current",
     "Distance to Future (0-6 months)",
     "Distance to Future (6-12 months)",
@@ -94,8 +90,7 @@ FDA_EXCEL_COLUMNS = [
     "",
     "Lineages",
     "CoVFit Fitness",
-    "PyR0 Fitness",
-    "Distance to Current",
+    "",
     "Distance to Future (0-6 months)",
     "Distance to Future (6-12 months)",
 ]
@@ -106,8 +101,7 @@ PFIZER_EXCEL_COLUMNS = [
     "",
     "Lineages",
     "CoVFit Fitness",
-    "PyR0 Fitness",
-    "Distance to Current",
+    "",
     "Distance to Future (0-6 months)",
     "Distance to Future (6-12 months)",
 ]
@@ -123,8 +117,7 @@ ORACLE_EXCEL_COLUMNS = [
     "Medoids",
     "Lineages",
     "CoVFit Fitness",
-    "PyR0 Fitness",
-    "Distance to Current",
+    "",
     "Distance to Future (0-6 months)",
     "Distance to Future (6-12 months)",
 ]
@@ -133,12 +126,6 @@ ORACLE_EXCEL_COLUMNS = [
 def load_data(file_path: Path) -> dict:
     df = pd.read_parquet(file_path)
     return dict(zip(df["key"], df["value"]))
-
-
-def exp_fitness_modifier(fitness_scores, beta):
-    """Fitness modifier: e ** (beta * fitness)."""
-    s_arr = np.asarray(fitness_scores, dtype=np.float32)
-    return np.power(np.e, beta * s_arr)
 
 
 def effective_weights(weights, fitness_scores=None, beta=None):
@@ -273,8 +260,6 @@ def future_weighted_pam(
     dist_matrix,
     weights,
     k,
-    fitness_scores=None,
-    beta=None,
     max_iter=100,
     verbose=False,
 ):
@@ -283,12 +268,21 @@ def future_weighted_pam(
 
     dist_matrix shape: (n_points, n_candidates)
     Medoids are indices into the candidate axis (columns).
+
+    Points are weighted by observed prevalence alone. There is deliberately no
+    fitness term: oracle medoids are chosen from what actually circulated, which
+    is what makes them an oracle. (`weighted_pam` does apply one, weighting the
+    circulating cohort by e ** (beta * fitness).)
     """
     n_points, n_candidates = dist_matrix.shape
     if k <= 0 or k > n_candidates:
         raise ValueError("k must be between 1 and the number of candidate medoids")
 
-    w_eff = effective_weights(weights, fitness_scores, beta)
+    # Promote to float64. Callers pass a float32 weight vector and a float32
+    # distance matrix, but the swap-acceptance test below compares deltas against
+    # -1e-12, which is far below float32 resolution (~1e-7 relative). Accumulating
+    # the weighted cost sums in float64 keeps that threshold meaningful.
+    w_eff = np.asarray(weights, dtype=np.float64)
 
     remaining = set(range(n_candidates))
     medoids = []
@@ -393,6 +387,11 @@ def preprocess_for_weighted_pam_fast(
     if use_covfit_scores:
         if covfit_score_df is None:
             raise ValueError("covfit_score_df is required when use_covfit_scores=True")
+        if fitness_column not in covfit_score_df.columns:
+            raise KeyError(
+                f"Column {fitness_column!r} not found in covfit_score_df; "
+                f"available: {list(covfit_score_df.columns)}"
+            )
         score_dict = covfit_score_df.set_index("Sequence_ID")[fitness_column].to_dict()
         missing = []
         fitness_values = []
@@ -449,51 +448,31 @@ def _hamming_distance_matrix_local(sequences1, sequences2, max_block_bytes=200_0
     return out
 
 
-def fitness_adjusted_weighted_min_distance(
-    distance_matrix,
-    seq_fitness,
-    candidate_fitness,
-    weights,
-    fitness_weighted=False,
-    beta=None,
-):
+def weighted_min_distance(distance_matrix, weights):
     """
-    Weighted average of minimum Hamming distances.
+    Prevalence-weighted average of minimum Hamming distances:
 
-    When fitness_weighted is False:
         contrib_i = w_i * min_j(distance_ij)
 
-    When fitness_weighted is True (current circulating pool):
-        contrib_i = w_i * e ** (beta * seq_i) * min_j(distance_ij / e ** (beta * candidate_j))
+    Future sequences are weighted by prevalence only: no fitness term enters the
+    distance to future cohorts anywhere in the pipeline.
     """
     weights = np.asarray(weights, dtype=float)
 
     if distance_matrix.size == 0:
         return 0.0
 
-    if fitness_weighted:
-        if beta is None:
-            raise ValueError("beta is required when fitness_weighted=True")
-        seq_fitness_modifiers = exp_fitness_modifier(seq_fitness, beta).astype(np.float64)
-        candidate_fitness_modifiers = exp_fitness_modifier(
-            candidate_fitness, beta
-        ).astype(np.float64)
-        distance_matrix = distance_matrix / candidate_fitness_modifiers.reshape(1, -1)
-        weights = weights * seq_fitness_modifiers
-    else:
-        del seq_fitness, candidate_fitness
-
     min_distances = np.min(distance_matrix, axis=1)
 
     total_weight = np.sum(weights)
     if total_weight == 0:
         return 0.0
+
     return float(np.sum(min_distances * weights) / total_weight)
 
 
-def evaluate_medoids_vectorized(medoids, id_to_seq_, future_seq_dfs, current_seq_df, fitness_column=FITNESS_COLUMN):
+def evaluate_medoids_vectorized(medoids, id_to_seq_, future_seq_dfs):
     medoid_seqs = [id_to_seq_[mid] for mid in medoids]
-    medoid_fitness = current_seq_df.set_index("Sequence_ID").loc[medoids, fitness_column].values
     results = {}
 
     for interval, df in future_seq_dfs.items():
@@ -504,19 +483,13 @@ def evaluate_medoids_vectorized(medoids, id_to_seq_, future_seq_dfs, current_seq
         future_seq_ids = df["Sequence_ID"].tolist()
         future_seqs = [id_to_seq_[sid] for sid in future_seq_ids]
         weights = df["Weight"].values
-        seq_fitness = df[fitness_column].values
 
         if not future_seqs:
             results[interval] = 0.0
             continue
 
         distance_matrix = np_hamming_distance_matrix(future_seqs, medoid_seqs)
-        results[interval] = fitness_adjusted_weighted_min_distance(
-            distance_matrix=distance_matrix,
-            seq_fitness=seq_fitness,
-            candidate_fitness=medoid_fitness,
-            weights=weights,
-        )
+        results[interval] = weighted_min_distance(distance_matrix, weights)
     return results
 
 
@@ -561,12 +534,9 @@ def evaluate_vaccines_vectorized(
     vaccine_to_seq,
     id_to_seq,
     future_seq_dfs,
-    vaccine_fitness,
-    fitness_column=FITNESS_COLUMN,
 ):
     vaccine_ids = [vid for vid in vaccines if vid in vaccine_to_seq]
     candidate_seqs = [vaccine_to_seq[vid] for vid in vaccine_ids]
-    candidate_fitness = np.array([vaccine_fitness[vid] for vid in vaccine_ids], dtype=float)
 
     if not candidate_seqs:
         return {interval: 0.0 for interval in future_seq_dfs}
@@ -585,60 +555,35 @@ def evaluate_vaccines_vectorized(
         future_seq_ids = valid_df["Sequence_ID"].tolist()
         future_seqs = [id_to_seq[sid] for sid in future_seq_ids]
         weights = valid_df["Weight"].values
-        seq_fitness = valid_df[fitness_column].values
 
         distance_matrix = np_hamming_distance_matrix(future_seqs, candidate_seqs)
-        results[interval] = fitness_adjusted_weighted_min_distance(
-            distance_matrix=distance_matrix,
-            seq_fitness=seq_fitness,
-            candidate_fitness=candidate_fitness,
-            weights=weights,
-        )
+        results[interval] = weighted_min_distance(distance_matrix, weights)
     return results
 
 
 def find_pairwise_dist_bin() -> Path:
-    for base in [Path.cwd().resolve(), REPO_ROOT, SCRIPT_DIR]:
-        for _ in range(6):
-            candidate = base / "scripts" / "pairwise_dist"
-            if candidate.is_file():
-                return candidate
-            if base.parent == base:
-                break
-            base = base.parent
-    raise FileNotFoundError(
-        "pairwise_dist not found. Build with: "
-        "cmake -S scripts -B scripts/build && cmake --build scripts/build -j"
-    )
+    """The pairwise_dist binary named by paths.bin_dir in config.yaml."""
+    return CFG.binary("pairwise_dist")
 
 
 def find_covfit_dir() -> Path:
-    covfit_dir = REPO_ROOT / "CoVFit_CLI"
-    if not (covfit_dir / "covfit_cli").exists():
-        raise FileNotFoundError(f"covfit_cli not found in {covfit_dir}")
+    covfit_dir = Path(CFG.path("covfit_cli"))
+    executable = Path(str(CFG.get("covfit", "executable"))).name
+    if not (covfit_dir / executable).exists():
+        raise FileNotFoundError(f"{executable} not found in {covfit_dir}")
     return covfit_dir
 
 
 def run_covfit(fasta_path: Path, outdir: Path, covfit_dir: Path) -> Path:
     outdir.mkdir(parents=True, exist_ok=True)
-    output_tsv = outdir / "CoVFit_Predictions_fold_3.tsv"
+    output_tsv = CFG.covfit_predictions(outdir)
     if output_tsv.exists():
         print(f"  Reusing CoVFit output: {output_tsv}")
         return output_tsv
 
-    cmd = [
-        "./covfit_cli",
-        "-i",
-        str(fasta_path),
-        "-o",
-        str(outdir),
-        "-g",
-        "-b",
-        "16",
-        "-f",
-        "3",
-        "-d",
-    ]
+    # Executable, fold, batch size and GPU flag all come from the covfit: block.
+    # "-d" (keep deletions) is this script's own addition.
+    cmd = CFG.covfit_command(fasta_path, outdir, extra=["-d"])
     print(f"  Running CoVFit: {' '.join(cmd)}")
     result = subprocess.run(cmd, cwd=str(covfit_dir), capture_output=True, text=True)
     if result.stdout:
@@ -662,10 +607,11 @@ def attach_fitness_column(df: pd.DataFrame, score_map: pd.Series, label: str) ->
     return df.assign(**{FITNESS_COLUMN: df["Sequence_ID"].map(score_map)})
 
 
-def run_pairwise_dist(current_seq_df: pd.DataFrame, id_to_seq: dict, cohort_dir: Path, skip: bool) -> pd.DataFrame:
+def run_pairwise_dist(current_seq_df: pd.DataFrame, id_to_seq: dict, cohort_dir: Path,
+                      skip: bool, cutoff_date: str) -> pd.DataFrame:
     cohort_dir.mkdir(parents=True, exist_ok=True)
-    current_dict = cohort_dir / "current_id_to_seq.parquet"
-    dist_parquet = cohort_dir / "pairwise_dist.parquet"
+    current_dict = CFG.cohort_file(cutoff_date, "current_id_to_seq")
+    dist_parquet = CFG.cohort_file(cutoff_date, "pairwise_dist")
 
     if skip and dist_parquet.exists():
         print(f"  Reusing pairwise distances: {dist_parquet}")
@@ -699,12 +645,7 @@ def build_cohort_data(final_df: pd.DataFrame, cutoff_date: str) -> Tuple[pd.Data
     current_df, future_df = split_circulating_and_future(
         final_df,
         cutoff_date_str=cutoff_date,
-        left_buffer_days=4,
-        right_buffer_days=4,
-        circulation_months=None,
-        circulation_days=CIRCULATION_DAYS,
-        future_months=12,
-        future_days=None,
+        **CFG.split_kwargs(),
     )
     future_slices = slice_by_disjoint_windows(future_df, DISJOINT_WINDOWS)
 
@@ -887,20 +828,7 @@ def modifier_display(beta: float) -> str:
     return f"e ^ ({beta} * fitness)"
 
 
-def pyro_fitness_for_medoids(medoid_ids: Iterable[str], id_to_seq: dict, ref_seq: str, mutation_score_dict: dict) -> Dict[str, float]:
-    scores = {}
-    for sid in medoid_ids:
-        seq = id_to_seq.get(sid)
-        if seq is None:
-            scores[sid] = np.nan
-        else:
-            mutations = compute_mutations(seq, ref_seq)
-            scores[sid] = compute_fitness_score_pyro(mutations, mutation_score_dict)
-    return scores
-
-
 def prepare_cutoff_assets(
-    root_path: Path,
     cutoff_date: str,
     final_df: pd.DataFrame,
     id_to_seq: dict,
@@ -908,18 +836,18 @@ def prepare_cutoff_assets(
     skip_pairwise: bool,
 ) -> Tuple[pd.DataFrame, Dict[str, pd.DataFrame], np.ndarray, np.ndarray, dict, dict, np.ndarray, pd.DataFrame]:
     print(f"\n=== Preparing cohort for cutoff {cutoff_date} ===")
-    cohort_dir = root_path / cutoff_date
+    cohort_dir = CFG.cutoff_dir(cutoff_date, create=True)
     current_seq_df, future_seq_dfs = build_cohort_data(final_df, cutoff_date)
     print(f"  Current sequences: {len(current_seq_df):,}")
 
-    current_fasta = cohort_dir / "vaccine_scout_current_seq_df.fasta"
+    current_fasta = CFG.cohort_file(cutoff_date, "vaccinescout_current_fasta")
     with open(current_fasta, "w") as handle:
         for seq_id in current_seq_df["Sequence_ID"]:
             handle.write(f">{seq_id}\n{id_to_seq[seq_id]}\n")
 
     current_covfit_tsv = run_covfit(
         current_fasta,
-        cohort_dir / "current_covfit",
+        CFG.covfit_outdir(cutoff_date, "current"),
         covfit_dir,
     )
 
@@ -927,30 +855,13 @@ def prepare_cutoff_assets(
     score_map = covfit_score_df.set_index("Sequence_ID")[FITNESS_COLUMN]
     current_seq_df = attach_fitness_column(current_seq_df, score_map, "current CoVFit")
 
-    future_ids = (
-        pd.concat([df[["Sequence_ID"]] for df in future_seq_dfs.values()])
-        .drop_duplicates()["Sequence_ID"]
-        .tolist()
-    )
-    future_fasta = cohort_dir / "vaccine_scout_future_seq_df.fasta"
-    with open(future_fasta, "w") as handle:
-        for seq_id in future_ids:
-            handle.write(f">{seq_id}\n{id_to_seq[seq_id]}\n")
+    # The future cohorts are weighted by prevalence alone -- no fitness term
+    # enters any distance to a future sequence -- so they are never scored with
+    # CoVFit. Scoring them cost a full CoVFit pass per cutoff and the column it
+    # produced was read only by arguments that had no effect on any result.
 
-    future_covfit_tsv = run_covfit(
-        future_fasta,
-        cohort_dir / "future_covfit",
-        covfit_dir,
-    )
-
-    future_covfit_df = load_covfit_scores(future_covfit_tsv)
-    future_score_map = future_covfit_df.set_index("Sequence_ID")[FITNESS_COLUMN]
-    for interval in future_seq_dfs:
-        future_seq_dfs[interval] = attach_fitness_column(
-            future_seq_dfs[interval], future_score_map, f"future {interval}"
-        )
-
-    dist_df = run_pairwise_dist(current_seq_df, id_to_seq, cohort_dir, skip_pairwise)
+    dist_df = run_pairwise_dist(current_seq_df, id_to_seq, cohort_dir, skip_pairwise,
+                                cutoff_date)
     dist_matrix, weights, id2idx, idx2id, fitness_scores = preprocess_for_weighted_pam_fast(
         current_seq_df,
         dist_df,
@@ -970,8 +881,6 @@ def run_beta_analysis(
     current_seq_df: pd.DataFrame,
     future_seq_dfs: Dict[str, pd.DataFrame],
     id_to_seq: dict,
-    ref_seq: str,
-    mutation_score_dict: dict,
     lineage_groups,
     lineage_fasta: Path,
     root_path: Path,
@@ -988,8 +897,6 @@ def run_beta_analysis(
             k=k,
             fitness_scores=fitness_scores,
             beta=beta,
-            max_iter=100,
-            verbose=False,
         )
         pam_results[k] = {
             "medoids": [idx2id[i] for i in medoids],
@@ -1010,20 +917,21 @@ def run_beta_analysis(
     rows = []
     for k in K_VALUES:
         medoid_ids = pam_results[k]["medoids"]
-        pyro_map = pyro_fitness_for_medoids(medoid_ids, id_to_seq, ref_seq, mutation_score_dict)
 
         eval_future = evaluate_medoids_vectorized(
             medoids=medoid_ids,
             id_to_seq_=id_to_seq,
             future_seq_dfs=future_seq_dfs,
-            current_seq_df=current_seq_df,
         )
         medoid_seqs = [id_to_seq[mid] for mid in medoid_ids]
+        # Weight the circulating cohort by the beta currently being swept, so a
+        # beta block's distance_current is measured under the same weighting
+        # that selected that block's medoids.
         dist_current = evaluate_on_current_vectorized(
             candidate_seqs=medoid_seqs,
             current_seq_df=current_seq_df,
             id_to_seq=id_to_seq,
-            beta=CURRENT_DISTANCE_BETA,
+            beta=beta,
         )
 
         for sid in medoid_ids:
@@ -1037,7 +945,6 @@ def run_beta_analysis(
                     "medoid": sid,
                     "lineage": lineage_map.get((k, sid), ""),
                     "covfit_fitness": covfit_map.get(sid, np.nan),
-                    "pyro_fitness": pyro_map.get(sid, np.nan),
                     "distance_current": dist_current,
                     "distance_0_6": eval_future.get("6M_1", np.nan),
                     "distance_6_12": eval_future.get("6M_2", np.nan),
@@ -1047,30 +954,32 @@ def run_beta_analysis(
     return rows
 
 
-def prepare_vaccine_covfit(
-    root_path: Path,
+def prepare_fda_covfit(
     cutoff_date: str,
     covfit_dir: Path,
 ) -> Tuple[dict, Dict[str, float]]:
-    vaccine_df = read_pickle(root_path / "vaccine_recommendations.pkl")
-    vaccine_df = vaccine_df.rename(columns={"clade": "Sequence_ID"})
-    clade_to_seq = dict(zip(vaccine_df["Sequence_ID"], vaccine_df["mutated_sequence"]))
+    """CoVFit scores for the FDA-recommended strains."""
+    fda_df = read_pickle(
+        CFG.file("fda_recommendations")
+    )
+    fda_df = fda_df.rename(columns={"clade": "Sequence_ID"})
+    clade_to_seq = dict(zip(fda_df["Sequence_ID"], fda_df["mutated_sequence"]))
 
-    cohort_dir = root_path / cutoff_date
-    vaccine_fasta = cohort_dir / "vaccine_scout_strains.fasta"
-    with open(vaccine_fasta, "w") as handle:
+    cohort_dir = CFG.cutoff_dir(cutoff_date, create=True)
+    fda_fasta = CFG.file("fda_strains_fasta")
+    with open(fda_fasta, "w") as handle:
         for strain, seq in clade_to_seq.items():
             handle.write(f">{strain}\n{seq}\n")
 
-    vaccine_covfit_tsv = run_covfit(
-        vaccine_fasta,
-        cohort_dir / "vaccine_covfit",
+    fda_covfit_tsv = run_covfit(
+        fda_fasta,
+        CFG.covfit_outdir(cutoff_date, "fda"),
         covfit_dir,
     )
 
-    vaccine_covfit_df = load_covfit_scores(vaccine_covfit_tsv)
-    vaccine_fitness = vaccine_covfit_df.set_index("Sequence_ID")[FITNESS_COLUMN].to_dict()
-    return clade_to_seq, vaccine_fitness
+    fda_covfit_df = load_covfit_scores(fda_covfit_tsv)
+    fda_fitness = fda_covfit_df.set_index("Sequence_ID")[FITNESS_COLUMN].to_dict()
+    return clade_to_seq, fda_fitness
 
 
 def load_pfizer_sequence(cutoff_date: str) -> Tuple[str, str]:
@@ -1079,7 +988,7 @@ def load_pfizer_sequence(cutoff_date: str) -> Tuple[str, str]:
 
     pfizer_inn = PFIZER_INN_BY_CUTOFF[cutoff_date]
     fasta_name = PFIZER_FASTA_BY_CUTOFF[cutoff_date]
-    fasta_path = REPO_ROOT / "data" / "Pfizer" / fasta_name
+    fasta_path = Path(CFG.pfizer_fasta(cutoff_date))
     if not fasta_path.is_file():
         raise FileNotFoundError(f"Pfizer AA FASTA not found: {fasta_path}")
 
@@ -1088,20 +997,19 @@ def load_pfizer_sequence(cutoff_date: str) -> Tuple[str, str]:
 
 
 def prepare_pfizer_covfit(
-    root_path: Path,
     cutoff_date: str,
     covfit_dir: Path,
     pfizer_inn: str,
     pfizer_seq: str,
 ) -> Dict[str, float]:
-    cohort_dir = root_path / cutoff_date
+    cohort_dir = CFG.cutoff_dir(cutoff_date, create=True)
     pfizer_fasta = cohort_dir / f"pfizer_{pfizer_inn}.fasta"
     with open(pfizer_fasta, "w") as handle:
         handle.write(f">{pfizer_inn}\n{pfizer_seq}\n")
 
     pfizer_covfit_tsv = run_covfit(
         pfizer_fasta,
-        cohort_dir / "pfizer_covfit",
+        CFG.covfit_outdir(cutoff_date, "pfizer"),
         covfit_dir,
     )
     pfizer_covfit_df = load_covfit_scores(pfizer_covfit_tsv)
@@ -1118,11 +1026,8 @@ def run_fda_variant_analysis(
     strain: str,
     clade_to_seq: dict,
     vaccine_fitness: Dict[str, float],
-    current_seq_df: pd.DataFrame,
     future_seq_dfs: Dict[str, pd.DataFrame],
     id_to_seq: dict,
-    ref_seq: str,
-    mutation_score_dict: dict,
     lineage_groups,
 ) -> dict:
     if strain not in clade_to_seq:
@@ -1135,8 +1040,6 @@ def run_fda_variant_analysis(
     else:
         lineage = first_lineage_from_group(assignment["lineage_groups"][0])
 
-    mutations = compute_mutations(vaccine_seq, ref_seq)
-    pyro_fitness = compute_fitness_score_pyro(mutations, mutation_score_dict)
     covfit_fitness = vaccine_fitness[strain]
 
     eval_future = evaluate_vaccines_vectorized(
@@ -1144,21 +1047,11 @@ def run_fda_variant_analysis(
         vaccine_to_seq=clade_to_seq,
         id_to_seq=id_to_seq,
         future_seq_dfs=future_seq_dfs,
-        vaccine_fitness=vaccine_fitness,
     )
-    dist_current = evaluate_on_current_vectorized(
-        candidate_seqs=[vaccine_seq],
-        current_seq_df=current_seq_df,
-        id_to_seq=id_to_seq,
-        beta=CURRENT_DISTANCE_BETA,
-    )
-
     return {
         "strain": strain,
         "lineage": lineage,
         "covfit_fitness": covfit_fitness,
-        "pyro_fitness": pyro_fitness,
-        "distance_current": dist_current,
         "distance_0_6": eval_future.get("6M_1", np.nan),
         "distance_6_12": eval_future.get("6M_2", np.nan),
     }
@@ -1168,19 +1061,14 @@ def run_pfizer_variant_analysis(
     pfizer_inn: str,
     pfizer_seq: str,
     pfizer_fitness: Dict[str, float],
-    current_seq_df: pd.DataFrame,
     future_seq_dfs: Dict[str, pd.DataFrame],
     id_to_seq: dict,
-    ref_seq: str,
-    mutation_score_dict: dict,
     lineage_groups,
 ) -> dict:
     pfizer_to_seq = {pfizer_inn: pfizer_seq}
     assignment = assign_medoid_lineages(pfizer_seq, lineage_groups)
     lineage = first_lineage_from_group(assignment["lineage_groups"][0])
 
-    mutations = compute_mutations(pfizer_seq, ref_seq)
-    pyro_fitness = compute_fitness_score_pyro(mutations, mutation_score_dict)
     covfit_fitness = pfizer_fitness[pfizer_inn]
 
     eval_future = evaluate_vaccines_vectorized(
@@ -1188,21 +1076,11 @@ def run_pfizer_variant_analysis(
         vaccine_to_seq=pfizer_to_seq,
         id_to_seq=id_to_seq,
         future_seq_dfs=future_seq_dfs,
-        vaccine_fitness=pfizer_fitness,
     )
-    dist_current = evaluate_on_current_vectorized(
-        candidate_seqs=[pfizer_seq],
-        current_seq_df=current_seq_df,
-        id_to_seq=id_to_seq,
-        beta=CURRENT_DISTANCE_BETA,
-    )
-
     return {
         "strain": pfizer_inn,
         "lineage": lineage,
         "covfit_fitness": covfit_fitness,
-        "pyro_fitness": pyro_fitness,
-        "distance_current": dist_current,
         "distance_0_6": eval_future.get("6M_1", np.nan),
         "distance_6_12": eval_future.get("6M_2", np.nan),
     }
@@ -1260,8 +1138,6 @@ def run_oracle_analysis(
     future_seq_dfs: Dict[str, pd.DataFrame],
     dist_df: pd.DataFrame,
     id_to_seq: dict,
-    ref_seq: str,
-    mutation_score_dict: dict,
     lineage_groups,
 ) -> Dict[str, Dict[int, List[dict]]]:
     """
@@ -1299,39 +1175,25 @@ def run_oracle_analysis(
             id_to_seq=id_to_seq,
         )
         oracle_point_weights = oracle_future_df["Weight"].to_numpy(dtype=np.float32)
-        oracle_point_fitness = oracle_future_df[FITNESS_COLUMN].to_numpy(dtype=np.float32)
 
         interval_results: Dict[int, List[dict]] = {}
         for k in K_VALUES:
+            # Prevalence-weighted only; see future_weighted_pam. (The old code
+            # passed the future CoVFit scores with beta=0, which made the
+            # e**(beta*fitness) term identically 1 and never moved a medoid.)
             medoid_idx, _labels = future_weighted_pam(
                 oracle_dist_matrix,
                 oracle_point_weights,
                 k=k,
-                fitness_scores=oracle_point_fitness,
-                beta=0,
-                max_iter=100,
-                verbose=False,
             )
             medoid_ids = [candidate_ids[i] for i in medoid_idx]
             print(f"  K={k}: medoids={medoid_ids}")
 
-            pyro_map = pyro_fitness_for_medoids(
-                medoid_ids, id_to_seq, ref_seq, mutation_score_dict
-            )
             eval_future = evaluate_medoids_vectorized(
                 medoids=medoid_ids,
                 id_to_seq_=id_to_seq,
                 future_seq_dfs=future_seq_dfs,
-                current_seq_df=current_seq_df,
             )
-            medoid_seqs = [id_to_seq[sid] for sid in medoid_ids]
-            dist_current = evaluate_on_current_vectorized(
-                candidate_seqs=medoid_seqs,
-                current_seq_df=current_seq_df,
-                id_to_seq=id_to_seq,
-                beta=CURRENT_DISTANCE_BETA,
-            )
-
             k_rows = []
             for sid in medoid_ids:
                 seq = id_to_seq.get(sid)
@@ -1350,8 +1212,6 @@ def run_oracle_analysis(
                         "medoid": sid,
                         "lineage": lineage,
                         "covfit_fitness": covfit_map.get(sid, np.nan),
-                        "pyro_fitness": pyro_map.get(sid, np.nan),
-                        "distance_current": dist_current,
                         "distance_0_6": eval_future.get("6M_1", np.nan),
                         "distance_6_12": eval_future.get("6M_2", np.nan),
                     }
@@ -1398,7 +1258,7 @@ def write_medoid_block(
         return
 
     shared = medoid_rows[0]
-    merge_cols = [0, 1, 6, 7, 8]
+    merge_cols = [0, 1, 5, 6, 7]
 
     for col_offset in merge_cols:
         col = start_col + col_offset
@@ -1412,9 +1272,9 @@ def write_medoid_block(
         value = {
             0: shared["weights_function"],
             1: modifier_display(beta),
-            6: shared["distance_current"],
-            7: shared["distance_0_6"],
-            8: shared["distance_6_12"],
+            5: shared["distance_current"],
+            6: shared["distance_0_6"],
+            7: shared["distance_6_12"],
         }[col_offset]
         cell = ws.cell(row=first_row, column=col, value=value)
         cell.alignment = Alignment(vertical="center")
@@ -1424,7 +1284,6 @@ def write_medoid_block(
         ws.cell(row=row, column=start_col + 2, value=medoid_row["medoid"])
         ws.cell(row=row, column=start_col + 3, value=medoid_row["lineage"])
         ws.cell(row=row, column=start_col + 4, value=medoid_row["covfit_fitness"])
-        ws.cell(row=row, column=start_col + 5, value=medoid_row["pyro_fitness"])
 
 
 def write_reference_vaccine_header_row(
@@ -1444,10 +1303,13 @@ def write_reference_vaccine_row(ws, row: int, vaccine_data: dict):
     ws.cell(row=row, column=start_col + 0, value=vaccine_data["strain"])
     ws.cell(row=row, column=start_col + 3, value=vaccine_data["lineage"])
     ws.cell(row=row, column=start_col + 4, value=vaccine_data["covfit_fitness"])
-    ws.cell(row=row, column=start_col + 5, value=vaccine_data["pyro_fitness"])
-    ws.cell(row=row, column=start_col + 6, value=vaccine_data["distance_current"])
-    ws.cell(row=row, column=start_col + 7, value=vaccine_data["distance_0_6"])
-    ws.cell(row=row, column=start_col + 8, value=vaccine_data["distance_6_12"])
+    # Column offset 5 ("Distance to Current") is intentionally left empty: a
+    # reference vaccine is a fixed strain, so a fitness-weighted distance to the
+    # circulating cohort would depend on a beta this row does not belong to. The
+    # column is kept blank rather than dropped so offsets 6/7 stay aligned with
+    # the scout beta blocks below (plot_scout_medoid_report.py reads by offset).
+    ws.cell(row=row, column=start_col + 6, value=vaccine_data["distance_0_6"])
+    ws.cell(row=row, column=start_col + 7, value=vaccine_data["distance_6_12"])
 
 
 def write_fda_header_row(ws, row: int, header_font: Font):
@@ -1484,7 +1346,10 @@ def write_oracle_k_block(
 
     start_col = block_start_column(0)
     shared = oracle_rows[0]
-    merge_cols = [0, 6, 7, 8]
+    # Offset 5 ("Distance to Current") is omitted: oracle medoids are chosen from
+    # observed future prevalence, so a distance back to the circulating cohort is
+    # not part of what the oracle reports.
+    merge_cols = [0, 6, 7]
 
     for col_offset in merge_cols:
         col = start_col + col_offset
@@ -1497,9 +1362,8 @@ def write_oracle_k_block(
             )
         value = {
             0: shared["fit_slice_label"],
-            6: shared["distance_current"],
-            7: shared["distance_0_6"],
-            8: shared["distance_6_12"],
+            6: shared["distance_0_6"],
+            7: shared["distance_6_12"],
         }[col_offset]
         cell = ws.cell(row=first_row, column=col, value=value)
         cell.alignment = Alignment(vertical="center")
@@ -1509,7 +1373,6 @@ def write_oracle_k_block(
         ws.cell(row=row, column=start_col + 2, value=oracle_row["medoid"])
         ws.cell(row=row, column=start_col + 3, value=oracle_row["lineage"])
         ws.cell(row=row, column=start_col + 4, value=oracle_row["covfit_fitness"])
-        ws.cell(row=row, column=start_col + 5, value=oracle_row["pyro_fitness"])
 
 
 def write_oracle_sections(
@@ -1693,7 +1556,7 @@ def write_excel_report(
 
             current_row = last_data_row + 2
 
-        block_widths = [16, 28, 14, 18, 16, 14, 18, 28, 28]
+        block_widths = [16, 28, 14, 18, 16, 18, 28, 28]
         for col_idx in range(1, total_cols + 1):
             block_offset = (col_idx - 1) % (BLOCK_COLS + BLOCK_GUTTER)
             if block_offset < BLOCK_COLS:
@@ -1705,11 +1568,441 @@ def write_excel_report(
     wb.save(output_path)
     print(f"\nWrote Excel report: {output_path}")
 
+# ---------------------------------------------------------------------------
+# Plots
+#
+# These draw straight from the in-memory results, and produces
+#
+#   distance_to_future_<horizon>_vs_k.svg        scout/oracle/FDA/Pfizer vs K
+#   distance_to_current_vs_k.svg                 scout only, vs K
+#   distance_to_future_vs_beta_<cutoff>.svg      vs beta, one row per K, one file
+#                                                per cutoff
+#
+# Every figure is drawn at one beta except the last, which sweeps it.
+# ---------------------------------------------------------------------------
+
+# Styling is kept in step with plot_scout_medoid_report.py, which draws the same
+# three figures from the saved workbook. Same on/off dash pattern for both
+# vaccines; Pfizer is offset half a cycle so overlapping lines stay visible.
+_VACCINE_DASH_ON, _VACCINE_DASH_OFF = 10, 6
+PLOT_FDA_DASH = (0, (_VACCINE_DASH_ON, _VACCINE_DASH_OFF))
+PLOT_PFIZER_DASH = (
+    (_VACCINE_DASH_ON + _VACCINE_DASH_OFF) // 2,
+    (_VACCINE_DASH_ON, _VACCINE_DASH_OFF),
+)
+# Legend keys use FDA's phase so both vaccine swatches read as the same pattern.
+PLOT_LEGEND_VACCINE_DASH = PLOT_FDA_DASH
+PLOT_ORACLE_DASH = (0, (2, 3))
+PLOT_SCOUT_COLOR = "C0"
+PLOT_FDA_COLOR = "#BA8E23"
+PLOT_PFIZER_COLOR = "#FF8C00"
+PLOT_ORACLE_06_COLOR = "C2"
+PLOT_ORACLE_612_COLOR = "C3"
+PLOT_ORACLE_COLOR = {"6M_1": PLOT_ORACLE_06_COLOR, "6M_2": PLOT_ORACLE_612_COLOR}
+# The vs-K figures show the whole K sweep. The vs-beta figure spends a full
+# row of panels on each K, so it stops at 4 to keep the page readable.
+PLOT_SUMMARY_MAX_K = max(K_VALUES)
+PLOT_BETA_MAX_K = 4
+PLOT_Y_PAD = 0.08
+PLOT_SUMMARY_COLS = 2
+PLOT_MARGIN = 0.10
+
+HORIZON_FIELD = {"0-6": "distance_0_6", "6-12": "distance_6_12"}
+HORIZON_LABEL = {"0-6": "0-6 months", "6-12": "6-12 months"}
+HORIZON_INTERVAL = {"0-6": "6M_1", "6-12": "6M_2"}
+
+
+def _finite(values) -> List[float]:
+    out = []
+    for v in values:
+        if v is None:
+            continue
+        try:
+            f = float(v)
+        except (TypeError, ValueError):
+            continue
+        if np.isfinite(f):
+            out.append(f)
+    return out
+
+
+def _pad_ylim(ax, values) -> None:
+    vals = _finite(values)
+    if not vals:
+        return
+    lo, hi = min(vals), max(vals)
+    pad = (hi - lo) * PLOT_Y_PAD
+    if pad == 0:
+        pad = max(abs(hi), 1.0) * 0.05
+    ax.set_ylim(lo - pad, hi + pad)
+
+
+def _summary_grid(n_panels: int):
+    """(n_rows, n_cols) for the one-panel-per-cutoff summary figures."""
+    n_cols = PLOT_SUMMARY_COLS
+    return max(1, -(-n_panels // n_cols)), n_cols
+
+
+def _scout_by_k(nested, cutoff_date, beta, field, k_values):
+    """(ks, values) for one cutoff at one beta, restricted to k_values."""
+    ks, ys = [], []
+    per_k = nested.get(cutoff_date, {})
+    for k in k_values:
+        rows = per_k.get(k, {}).get(beta)
+        if rows:
+            ks.append(k)
+            ys.append(rows[0][field])
+    return ks, ys
+
+
+def _scout_vs_beta(nested, cutoff_date, k, field):
+    """(betas, values) for one cutoff at one K."""
+    bs, ys = [], []
+    for beta in sorted(nested.get(cutoff_date, {}).get(k, {})):
+        rows = nested[cutoff_date][k][beta]
+        if rows:
+            bs.append(beta)
+            ys.append(rows[0][field])
+    return bs, ys
+
+
+def _oracle_by_k(oracle_results, cutoff_date, interval, field, k_values=None):
+    ks, ys = [], []
+    per_interval = oracle_results.get(cutoff_date, {}).get(interval, {})
+    for k in sorted(per_interval):
+        if k_values is not None and k not in k_values:
+            continue
+        rows = per_interval[k]
+        if rows:
+            ks.append(k)
+            ys.append(rows[0][field])
+    return ks, ys
+
+
+def _reference_value(results, cutoff_date, field):
+    data = results.get(cutoff_date)
+    return None if data is None else data.get(field)
+
+
+def _reference_label(results, cutoff_date: str, name: str) -> str:
+    """`FDA (KP.2)` when the strain for this cutoff is known, else plain `FDA`."""
+    strain = _reference_value(results, cutoff_date, "strain")
+    return f"{name} ({strain})" if strain else name
+
+
+def plot_future_distance_vs_medoids(
+    nested, fda_results, pfizer_results, oracle_results,
+    horizon: str, beta: float, output_path: Path, max_k=PLOT_SUMMARY_MAX_K,
+) -> None:
+    """Distance to future sequences vs number of medoids, one panel per cutoff."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
+    field = HORIZON_FIELD[horizon]
+    interval = HORIZON_INTERVAL[horizon]
+    horizon_label = HORIZON_LABEL[horizon]
+    oracle_color = PLOT_ORACLE_COLOR[interval]
+
+    cutoffs = sorted(nested)
+    if not cutoffs:
+        return
+    k_limit = max_k if max_k is not None else max(
+        (k for c in cutoffs for k in nested[c]), default=1
+    )
+    all_k = list(range(1, k_limit + 1))
+
+    n_rows, n_cols = _summary_grid(len(cutoffs))
+    fig, axes = plt.subplots(
+        n_rows, n_cols, figsize=(3.8 * n_cols, 4.2 * n_rows), squeeze=False,
+    )
+
+    for idx, cutoff_date in enumerate(cutoffs):
+        row, col = divmod(idx, n_cols)
+        ax = axes[row][col]
+
+        ks, ys = _scout_by_k(nested, cutoff_date, beta, field, all_k)
+        if ks:
+            ax.plot(ks, ys, marker="o", linewidth=2, color=PLOT_SCOUT_COLOR)
+
+        oks, oys = _oracle_by_k(oracle_results, cutoff_date, interval, field, all_k)
+        if oks:
+            ax.plot(oks, oys, marker="s", linewidth=2,
+                    linestyle=PLOT_ORACLE_DASH, color=oracle_color)
+
+        panel = list(ys) + list(oys)
+        for results, color, dash, zorder in (
+            (fda_results, PLOT_FDA_COLOR, PLOT_FDA_DASH, 4),
+            (pfizer_results, PLOT_PFIZER_COLOR, PLOT_PFIZER_DASH, 5),
+        ):
+            value = _reference_value(results, cutoff_date, field)
+            if value is not None and np.isfinite(value):
+                ax.axhline(value, linestyle=dash, linewidth=2.5, color=color,
+                           alpha=0.95, zorder=zorder)
+                panel.append(value)
+        _pad_ylim(ax, panel)
+
+        ax.set_title(cutoff_display_name(cutoff_date), fontsize=12, fontweight="bold")
+        ax.set_xticks(all_k)
+        ax.set_xlim(0.5, k_limit + 0.5)
+        if row == n_rows - 1:
+            ax.set_xlabel("Number of Medoids (K)", fontsize=14)
+        if col == 0:
+            ax.set_ylabel("Avg. Spike Sequence Distance", fontsize=14)
+        ax.tick_params(labelsize=12)
+        ax.grid(True, alpha=0.3)
+
+    for idx in range(len(cutoffs), n_rows * n_cols):
+        row, col = divmod(idx, n_cols)
+        axes[row][col].set_visible(False)
+
+    legend_handles = [
+        Line2D([0], [0], color=PLOT_SCOUT_COLOR, linewidth=2, marker="o",
+               label="VaccineScout medoids"),
+        Line2D([0], [0], color=PLOT_FDA_COLOR, linewidth=2.5,
+               linestyle=PLOT_LEGEND_VACCINE_DASH, label="FDA"),
+        Line2D([0], [0], color=PLOT_PFIZER_COLOR, linewidth=2.5,
+               linestyle=PLOT_LEGEND_VACCINE_DASH, label="Pfizer"),
+        Line2D([0], [0], color=oracle_color, linewidth=2, marker="s",
+               linestyle=PLOT_ORACLE_DASH, label=f"Oracle ({horizon_label})"),
+    ]
+    fig.suptitle(
+        f"Distance to Future Sequences ({horizon_label}) vs Medoids",
+        fontsize=17, fontweight="bold", y=0.99,
+    )
+    fig.legend(
+        legend_handles,
+        [h.get_label() for h in legend_handles],
+        loc="lower center",
+        bbox_to_anchor=(0.5, 0.875),
+        ncol=2,
+        frameon=False,
+        fontsize=14,
+        borderaxespad=0,
+    )
+    fig.subplots_adjust(
+        top=0.835, bottom=0.08,
+        left=PLOT_MARGIN, right=1.0 - PLOT_MARGIN + 0.05,
+        hspace=0.26, wspace=0.22,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=150)
+    plt.close(fig)
+    print(f"  Wrote plot: {output_path}")
+
+
+def plot_current_distance_vs_medoids(nested, beta: float, output_path: Path,
+                                     max_k=PLOT_SUMMARY_MAX_K) -> None:
+    """Weighted distance to circulating variants vs number of medoids (scout only)."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
+    cutoffs = sorted(nested)
+    if not cutoffs:
+        return
+    k_limit = max_k if max_k is not None else max(
+        (k for c in cutoffs for k in nested[c]), default=1
+    )
+    all_k = list(range(1, k_limit + 1))
+
+    n_rows, n_cols = _summary_grid(len(cutoffs))
+    fig, axes = plt.subplots(
+        n_rows, n_cols, figsize=(3.8 * n_cols, 4.2 * n_rows), squeeze=False,
+    )
+
+    for idx, cutoff_date in enumerate(cutoffs):
+        row, col = divmod(idx, n_cols)
+        ax = axes[row][col]
+
+        ks, ys = _scout_by_k(nested, cutoff_date, beta, "distance_current", all_k)
+        if ks:
+            ax.plot(ks, ys, marker="o", linewidth=2, color=PLOT_SCOUT_COLOR)
+
+        ax.set_title(cutoff_display_name(cutoff_date), fontsize=12, fontweight="bold")
+        ax.set_xticks(all_k)
+        ax.set_xlim(0.5, k_limit + 0.5)
+        # Distances are magnitudes, so the panels are read against a common zero;
+        # autoscaling starts each one just under its own minimum, which makes a
+        # shallow decline look as steep as a large one.
+        ax.set_ylim(bottom=0)
+        if row == n_rows - 1:
+            ax.set_xlabel("Number of Medoids (K)", fontsize=14)
+        if col == 0:
+            ax.set_ylabel("Avg. Min. Weighted Distance", fontsize=14)
+        ax.tick_params(labelsize=12)
+        ax.grid(True, alpha=0.3)
+
+    for idx in range(len(cutoffs), n_rows * n_cols):
+        row, col = divmod(idx, n_cols)
+        axes[row][col].set_visible(False)
+
+    legend_handles = [
+        Line2D([0], [0], color=PLOT_SCOUT_COLOR, linewidth=2, marker="o",
+               label="VaccineScout Medoids"),
+    ]
+    fig.suptitle(
+        "Weighted Distance to Circulating Variants vs Medoids",
+        fontsize=18, fontweight="bold", y=0.99,
+    )
+    fig.legend(
+        legend_handles,
+        [h.get_label() for h in legend_handles],
+        loc="lower center",
+        bbox_to_anchor=(0.5, 0.915),
+        ncol=1,
+        frameon=False,
+        fontsize=14,
+        borderaxespad=0,
+    )
+    fig.subplots_adjust(
+        top=0.89, bottom=0.08,
+        left=PLOT_MARGIN, right=1.0 - PLOT_MARGIN + 0.05,
+        hspace=0.26, wspace=0.22,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=150)
+    plt.close(fig)
+    print(f"  Wrote plot: {output_path}")
+
+
+def plot_future_distance_vs_beta(
+    nested, fda_results, pfizer_results, oracle_results,
+    cutoff_date: str, output_path: Path, max_k=PLOT_BETA_MAX_K,
+) -> None:
+    """Distance to future sequences vs beta: one row per K, one column per horizon."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
+    ks = [k for k in sorted(nested.get(cutoff_date, {})) if max_k is None or k <= max_k]
+    if not ks:
+        return
+    horizons = ["0-6", "6-12"]
+    n_k = len(ks)
+    fig_height = 3.4 * n_k
+
+    fig, axes = plt.subplots(
+        n_k, len(horizons), figsize=(13, fig_height), sharex=True, squeeze=False,
+    )
+    for r, k in enumerate(ks):
+        for c, horizon in enumerate(horizons):
+            ax = axes[r][c]
+            field = HORIZON_FIELD[horizon]
+            interval = HORIZON_INTERVAL[horizon]
+
+            betas, ys = _scout_vs_beta(nested, cutoff_date, k, field)
+            if betas:
+                ax.plot(betas, ys, marker="o", linewidth=2, color=PLOT_SCOUT_COLOR)
+            panel = list(ys)
+            ax.grid(True, alpha=0.3)
+
+            # Oracle, FDA and Pfizer do not depend on beta, so they are levels.
+            for results, color, dash, zorder in (
+                (fda_results, PLOT_FDA_COLOR, PLOT_FDA_DASH, 4),
+                (pfizer_results, PLOT_PFIZER_COLOR, PLOT_PFIZER_DASH, 5),
+            ):
+                value = _reference_value(results, cutoff_date, field)
+                if value is not None and np.isfinite(value):
+                    ax.axhline(value, linestyle=dash, linewidth=2.5, color=color,
+                               alpha=0.95, zorder=zorder)
+                    panel.append(value)
+
+            oks, oys = _oracle_by_k(oracle_results, cutoff_date, interval, field)
+            oracle_level = dict(zip(oks, oys)).get(k)
+            if oracle_level is not None and np.isfinite(oracle_level):
+                ax.axhline(oracle_level, linestyle=PLOT_ORACLE_DASH, linewidth=2,
+                           color=PLOT_ORACLE_COLOR[interval])
+                panel.append(oracle_level)
+
+            _pad_ylim(ax, panel)
+
+            if r == n_k - 1:
+                ax.set_xlabel(r"$\beta$", fontsize=13)
+            label = f"Distance to Future ({HORIZON_LABEL[horizon]})"
+            ax.set_ylabel(f"K = {k}\n{label}" if c == 0 else label)
+
+    legend_handles = [
+        Line2D([0], [0], color=PLOT_SCOUT_COLOR, linewidth=2, marker="o",
+               label="VaccineScout medoids"),
+        Line2D([0], [0], color=PLOT_FDA_COLOR, linewidth=2.5,
+               linestyle=PLOT_LEGEND_VACCINE_DASH,
+               label=_reference_label(fda_results, cutoff_date, "FDA")),
+        Line2D([0], [0], color=PLOT_PFIZER_COLOR, linewidth=2.5,
+               linestyle=PLOT_LEGEND_VACCINE_DASH,
+               label=_reference_label(pfizer_results, cutoff_date, "Pfizer")),
+        Line2D([0], [0], color=PLOT_ORACLE_06_COLOR, linewidth=2,
+               linestyle=PLOT_ORACLE_DASH, label="Oracle (0-6 months)"),
+        Line2D([0], [0], color=PLOT_ORACLE_612_COLOR, linewidth=2,
+               linestyle=PLOT_ORACLE_DASH, label="Oracle (6-12 months)"),
+    ]
+
+    # Header offsets are in inches so the title/legend band stays put no matter
+    # how many K rows the figure has.
+    fig.subplots_adjust(top=1 - 1.30 / fig_height, hspace=0.35, wspace=0.18)
+    fig.legend(
+        legend_handles,
+        [h.get_label() for h in legend_handles],
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1 - 1.05 / fig_height),
+        ncol=3,
+        frameon=False,
+        fontsize=12,
+        labelspacing=0.2,
+        columnspacing=1.2,
+        handlelength=3.5,
+    )
+    fig.suptitle(
+        f"Distance to Future Sequences vs "
+        rf"$\beta$ — {cutoff_display_name(cutoff_date)}",
+        fontsize=14, fontweight="bold", y=1 - 0.30 / fig_height,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=150, bbox_inches="tight", pad_inches=0.08)
+    plt.close(fig)
+    print(f"  Wrote plot: {output_path}")
+
+
+def write_plots(all_rows, fda_results, pfizer_results, oracle_results,
+                output_dir: Path, beta: float,
+                summary_max_k=PLOT_SUMMARY_MAX_K, beta_max_k=PLOT_BETA_MAX_K) -> None:
+    """All three figures, from the results already held in memory."""
+    nested = nest_medoid_rows(all_rows)
+    if not nested:
+        print("No medoid rows; skipping plots.")
+        return
+
+    print(f"\nWriting plots to {output_dir} (beta={beta:g})")
+    for horizon in ("0-6", "6-12"):
+        plot_future_distance_vs_medoids(
+            nested, fda_results, pfizer_results, oracle_results, horizon, beta,
+            output_dir / f"distance_to_future_{horizon.replace('-', '_')}_vs_k.svg",
+            summary_max_k,
+        )
+    plot_current_distance_vs_medoids(
+        nested, beta, output_dir / "distance_to_current_vs_k.svg", summary_max_k,
+    )
+    for cutoff_date in sorted(nested):
+        plot_future_distance_vs_beta(
+            nested, fda_results, pfizer_results, oracle_results, cutoff_date,
+            output_dir
+            / f"distance_to_future_vs_beta_{cutoff_display_name(cutoff_date).replace('/', '-')}.svg",
+            beta_max_k,
+        )
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Export scout medoid analysis to Excel.")
+    parser = argparse.ArgumentParser(description="Export vaccinescout medoid analysis to Excel.")
     parser.add_argument("--root-path", default=ROOT_PATH_DEFAULT)
-    parser.add_argument("--output", default=str(REPO_ROOT / "scout_medoid_report.xlsx"))
+    parser.add_argument(
+        "--output",
+        default=str(Path(CFG.data_root) / "vaccinescout_medoid_report.xlsx"),
+        help="Excel report path (default: <paths.data_root>/vaccinescout_medoid_report.xlsx). "
+             "The plot directory is derived from it.",
+    )
     parser.add_argument("--cutoff-dates", nargs="+", default=CUTOFF_DATES_DEFAULT)
     parser.add_argument("--betas", nargs="+", type=float, default=BETAS_DEFAULT)
     parser.add_argument(
@@ -1718,6 +2011,17 @@ def main():
         help="Reuse existing CoVFit TSVs when present; missing predictions are generated automatically.",
     )
     parser.add_argument("--skip-pairwise", action="store_true", help="Reuse existing pairwise_dist.parquet.")
+    parser.add_argument(
+        "--plot-dir",
+        default=None,
+        help="Directory for the SVG plots (default: <output stem>_plots next to --output).",
+    )
+    parser.add_argument(
+        "--plot-beta",
+        type=float,
+        default=None,
+        help="Beta whose medoids the vs-K plots use (default: analysis.beta from config.yaml).",
+    )
     parser.add_argument(
         "--extract-lineage-only",
         action="store_true",
@@ -1730,12 +2034,9 @@ def main():
     covfit_dir = find_covfit_dir()
 
     print("Loading shared data...")
-    final_df = pd.read_parquet(root_path / "final_df.parquet")
-    id_to_seq = load_data(root_path / "sequence_dict.parquet")
-    ref_seq = getReference(str(root_path / "ref_spike_genome.fa"))
-    pyro_df = read_pickle(root_path / f"pyro_ver/{PYRO_VER}/PyroSpike.pkl")
-    mutation_score_dict = pyro_df.set_index("mutation")["R / R_A"].to_dict()
-    lineage_fasta = root_path / "lineage_spike.fasta"
+    final_df = pd.read_parquet(CFG.file("final_df"))
+    id_to_seq = load_data(CFG.file("sequence_dict"))
+    lineage_fasta = Path(CFG.file("lineage_spike_fasta"))
     lineage_groups = load_lineage_spike_groups(lineage_fasta)
 
     all_rows: List[dict] = []
@@ -1754,7 +2055,6 @@ def main():
             fitness_scores,
             dist_df,
         ) = prepare_cutoff_assets(
-            root_path=root_path,
             cutoff_date=cutoff_date,
             final_df=final_df,
             id_to_seq=id_to_seq,
@@ -1762,8 +2062,7 @@ def main():
             skip_pairwise=args.skip_pairwise,
         )
 
-        clade_to_seq, vaccine_fitness = prepare_vaccine_covfit(
-            root_path=root_path,
+        clade_to_seq, fda_fitness = prepare_fda_covfit(
             cutoff_date=cutoff_date,
             covfit_dir=covfit_dir,
         )
@@ -1772,17 +2071,13 @@ def main():
             fda_results[cutoff_date] = run_fda_variant_analysis(
                 strain=fda_strain,
                 clade_to_seq=clade_to_seq,
-                vaccine_fitness=vaccine_fitness,
-                current_seq_df=current_seq_df,
+                vaccine_fitness=fda_fitness,
                 future_seq_dfs=future_seq_dfs,
                 id_to_seq=id_to_seq,
-                ref_seq=ref_seq,
-                mutation_score_dict=mutation_score_dict,
                 lineage_groups=lineage_groups,
             )
             print(
                 f"  FDA variant {fda_strain}: "
-                f"current={fda_results[cutoff_date]['distance_current']:.3f}, "
                 f"0-6mo={fda_results[cutoff_date]['distance_0_6']:.3f}, "
                 f"6-12mo={fda_results[cutoff_date]['distance_6_12']:.3f}"
             )
@@ -1790,7 +2085,6 @@ def main():
         if cutoff_date in PFIZER_INN_BY_CUTOFF:
             pfizer_inn, pfizer_seq = load_pfizer_sequence(cutoff_date)
             pfizer_fitness = prepare_pfizer_covfit(
-                root_path=root_path,
                 cutoff_date=cutoff_date,
                 covfit_dir=covfit_dir,
                 pfizer_inn=pfizer_inn,
@@ -1800,16 +2094,12 @@ def main():
                 pfizer_inn=pfizer_inn,
                 pfizer_seq=pfizer_seq,
                 pfizer_fitness=pfizer_fitness,
-                current_seq_df=current_seq_df,
                 future_seq_dfs=future_seq_dfs,
                 id_to_seq=id_to_seq,
-                ref_seq=ref_seq,
-                mutation_score_dict=mutation_score_dict,
                 lineage_groups=lineage_groups,
             )
             print(
                 f"  Pfizer vaccine {pfizer_inn}: "
-                f"current={pfizer_results[cutoff_date]['distance_current']:.3f}, "
                 f"0-6mo={pfizer_results[cutoff_date]['distance_0_6']:.3f}, "
                 f"6-12mo={pfizer_results[cutoff_date]['distance_6_12']:.3f}"
             )
@@ -1820,8 +2110,6 @@ def main():
             future_seq_dfs=future_seq_dfs,
             dist_df=dist_df,
             id_to_seq=id_to_seq,
-            ref_seq=ref_seq,
-            mutation_score_dict=mutation_score_dict,
             lineage_groups=lineage_groups,
         )
 
@@ -1835,8 +2123,6 @@ def main():
                 current_seq_df=current_seq_df,
                 future_seq_dfs=future_seq_dfs,
                 id_to_seq=id_to_seq,
-                ref_seq=ref_seq,
-                mutation_score_dict=mutation_score_dict,
                 lineage_groups=lineage_groups,
                 lineage_fasta=lineage_fasta,
                 root_path=root_path,
@@ -1847,36 +2133,17 @@ def main():
 
     write_excel_report(all_rows, fda_results, pfizer_results, oracle_results, output_path)
 
-    summary_df = pd.DataFrame(all_rows)
-    oracle_flat_rows = [
-        row
-        for cutoff_data in oracle_results.values()
-        for interval_data in cutoff_data.values()
-        for k_rows in interval_data.values()
-        for row in k_rows
-    ]
-    if oracle_flat_rows:
-        oracle_df = pd.DataFrame(oracle_flat_rows)
-        summary_df = pd.concat([summary_df, oracle_df], ignore_index=True, sort=False)
-    if fda_results:
-        fda_df = pd.DataFrame(
-            [
-                {"cutoff_date": cutoff, "reference_type": "FDA", **data}
-                for cutoff, data in fda_results.items()
-            ]
+    plot_dir = Path(args.plot_dir) if args.plot_dir else output_path.with_name(
+        output_path.stem + "_plots"
+    )
+    plot_beta = args.plot_beta if args.plot_beta is not None else CURRENT_DISTANCE_BETA
+    if plot_beta not in args.betas:
+        print(
+            f"Note: --plot-beta {plot_beta:g} is not in the swept betas {args.betas}; "
+            "the vs-K plots will be empty. Pass a swept value to populate them."
         )
-        summary_df = pd.concat([fda_df, summary_df], ignore_index=True, sort=False)
-    if pfizer_results:
-        pfizer_df = pd.DataFrame(
-            [
-                {"cutoff_date": cutoff, "reference_type": "Pfizer", **data}
-                for cutoff, data in pfizer_results.items()
-            ]
-        )
-        summary_df = pd.concat([pfizer_df, summary_df], ignore_index=True, sort=False)
-    summary_csv = output_path.with_suffix(".csv")
-    summary_df.to_csv(summary_csv, index=False)
-    print(f"Wrote CSV summary: {summary_csv}")
+    write_plots(all_rows, fda_results, pfizer_results, oracle_results,
+                plot_dir, plot_beta)
 
 
 if __name__ == "__main__":

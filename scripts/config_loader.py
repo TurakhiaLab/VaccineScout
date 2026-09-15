@@ -247,11 +247,16 @@ class Config:
                 "No EVEscape backbone configured. Set analysis.eve_backbone in "
                 f"{self.config_path} (e.g. EVEscore_Omicron_XBB)."
             )
-        return (
-            self.data_root
-            / self.get("fitness", "eve_subdir", "EVEscape")
-            / str(backbone)
+        # eve_subdir sits in analysis:, beside eve_backbone. fitness: is still
+        # consulted so a config that put it there keeps resolving; the literal is
+        # the last resort. Reading only fitness: used to work purely because the
+        # default matched, and silently ignored a changed analysis.eve_subdir.
+        subdir = (
+            self.get("analysis", "eve_subdir")
+            or self.get("fitness", "eve_subdir")
+            or "EVEscape"
         )
+        return self.data_root / str(subdir) / str(backbone)
 
     @property
     def fitness_column(self) -> str:
@@ -419,107 +424,86 @@ def load_config_optional(path: Optional[os.PathLike] = None):
 
 
 # ---------------------------------------------------------------------------
-# Classification used by the audit below (`python scripts/config_loader.py`).
+# The audit (`python scripts/config_loader.py`).
 #
-# CRITICAL entries are the pipeline's inputs: things you download, check out or
-# build yourself. Nothing regenerates them, so a missing one is a hard stop.
+# It reports the pipeline's inputs only: the files you download, the third-party
+# checkouts, and the binaries you build. Nothing regenerates these, so a missing
+# one is a hard stop.
 #
-# Everything else is an intermediate that some pipeline step writes. Missing
-# only means that step has not run yet, which is the normal state of a fresh
-# checkout -- hence the separate section, so a wall of MISSING lines does not
-# bury the handful that actually need your attention.
+# Intermediates are deliberately not listed. Every step rewrites its own outputs,
+# so their absence says nothing except "that step has not run yet" -- a wall of
+# MISSING lines that buries the handful actually needing attention.
 # ---------------------------------------------------------------------------
+
+#: The downloaded input files, as ``(files: key, label)``. These four resolve
+#: straight out of the ``files:`` block; the PyR0, EVEscape and Pfizer inputs are
+#: keyed on run parameters instead and are added by ``_input_rows`` below.
+INPUT_FILES = (
+    ("mat",         "MAT tree (.pb)"),
+    ("tree_newick", "Newick tree (.nwk)"),
+    ("metadata",    "Metadata (.tsv)"),
+    ("reference",   "Reference genome (.fa)"),
+)
 
 #: ``paths:`` keys that must already exist.
 CRITICAL_PATHS = ("data_root", "pyro_cov", "covfit_cli", "pfizer_dir", "bin_dir")
 
-#: ``files:`` keys that are inputs rather than pipeline products.
-CRITICAL_FILES = ("reference", "mat", "tree_newick", "metadata")
 
-#: ``files:`` entries that live under <data_root>/<cutoff_date>/, not the root.
-COHORT_FILES = ("pairwise_dist", "current_id_to_seq", "current_seq_mutation_sites")
-
-#: Which step writes each remaining ``files:`` entry.
-PRODUCED_BY = {
-    "chronumental_dates":         "step 0  chronumental",
-    "ref_spike_genome":           "step 1  get_amino_acid_mutations_of_sequences.py",
-    "node_spike_cumulative":      "step 1  get_amino_acid_mutations_of_sequences.py",
-    "node_spike_branch":          "step 1  get_amino_acid_mutations_of_sequences.py",
-    "parent_node":                "step 1  get_amino_acid_mutations_of_sequences.py",
-    "lineage_spike_fasta":        "step 2  get_lineage_fasta.py",
-    "fda_recommendations":        "step 3  lineage_spike_from_mat.py",
-    "final_df":                   "step 5  create_from_chronumental_data.ipynb",
-    "sequence_dict":              "step 5  create_from_chronumental_data.ipynb",
-    "mutation_path_dict":         "step 5  create_from_chronumental_data.ipynb",
-    "rank_current_fasta":         "step 6  rank_analysis.ipynb",
-    "current_id_to_seq":          "step 9  vaccinescout_selection.ipynb",
-    "current_seq_mutation_sites": "step 9  vaccinescout_selection.ipynb",
-    "pairwise_dist":              "step 9  vaccinescout_selection.ipynb (pairwise_dist)",
-    "vaccinescout_current_fasta": "step 9  vaccinescout_selection.ipynb",
-    "fda_strains_fasta":          "step 9  vaccinescout_selection.ipynb",
-}
-
-
-def _audit_rows(cfg: "Config"):
-    """``(critical, generated)`` rows of ``(label, note, path)`` for the audit."""
-    critical = []
-    for key in CRITICAL_PATHS:
+def _input_rows(cfg: "Config"):
+    """``(label, note, path)`` for every downloaded input the pipeline reads."""
+    rows = []
+    for key, label in INPUT_FILES:
         try:
-            critical.append((key, "directory", cfg.path(key)))
+            rows.append((label, f"files.{key}", cfg.file(key)))
         except Exception as exc:  # noqa: BLE001 - report, do not abort the audit
-            critical.append((key, f"unresolved: {exc}", None))
-
-    for key in CRITICAL_FILES:
-        critical.append((key, "downloaded input", cfg.file(key)))
+            rows.append((label, f"unresolved: {exc}", None))
 
     for label, note, getter in (
-        ("PyR0 mutations tsv",
+        ("PyR0 mutations (.tsv)",
          f"fitness.pyro_version={cfg.get('fitness', 'pyro_version')}",
          cfg.pyro_mutations_tsv),
-        ("EVEscape scores", f"analysis.eve_backbone={cfg.get('analysis', 'eve_backbone')}",
+        ("EVEscape scores",
+         f"analysis.eve_backbone={cfg.get('analysis', 'eve_backbone')}",
          cfg.eve_scores),
     ):
         try:
-            critical.append((label, note, getter()))
+            rows.append((label, note, getter()))
         except Exception as exc:  # noqa: BLE001
-            critical.append((label, f"unresolved: {exc}", None))
+            rows.append((label, f"unresolved: {exc}", None))
 
-    cutoff = cfg.cutoff_date
+    # One Pfizer genome per cutoff, not just the one for analysis.cutoff_date:
+    # step 10 sweeps every cutoff, so all of them are inputs to a full run.
     try:
-        critical.append((f"Pfizer FASTA", f"analysis.cutoff_date={cutoff}",
-                         cfg.pfizer_fasta(cutoff)))
+        by_cutoff = cfg.section("vaccines").get("pfizer_fasta_by_cutoff", {})
     except Exception as exc:  # noqa: BLE001
-        critical.append(("Pfizer FASTA", f"unresolved: {exc}", None))
+        rows.append(("Pfizer genome", f"unresolved: {exc}", None))
+        by_cutoff = {}
+    for cutoff in sorted(by_cutoff):
+        try:
+            rows.append((f"Pfizer genome {cutoff}",
+                         "vaccines.pfizer_fasta_by_cutoff", cfg.pfizer_fasta(cutoff)))
+        except Exception as exc:  # noqa: BLE001
+            rows.append((f"Pfizer genome {cutoff}", f"unresolved: {exc}", None))
+    return rows
+
+
+def _support_rows(cfg: "Config"):
+    """``(label, note, path)`` for the directories and binaries a run needs."""
+    rows = []
+    for key in CRITICAL_PATHS:
+        try:
+            rows.append((key, f"paths.{key}", cfg.path(key)))
+        except Exception as exc:  # noqa: BLE001
+            rows.append((key, f"unresolved: {exc}", None))
 
     # binary() raises when a helper is missing, which is exactly what an audit
     # must not do -- resolve the paths by hand instead.
     executable = str(cfg.get("covfit", "executable", "./covfit_cli"))
-    critical.append(("covfit_cli", "covfit.executable",
-                     cfg.path("covfit_cli") / Path(executable).name))
+    rows.append(("covfit_cli", "covfit.executable",
+                 cfg.path("covfit_cli") / Path(executable).name))
     for name in ("min_dist", "pairwise_dist"):
-        critical.append((name, "built by cmake", cfg.path("bin_dir") / name))
-
-    generated = []
-    try:
-        generated.append(("PyR0 spike pickle", "step 4  pyro_aug.py",
-                          cfg.pyro_spike_pickle()))
-    except Exception as exc:  # noqa: BLE001
-        generated.append(("PyR0 spike pickle", f"unresolved: {exc}", None))
-
-    cutoff = cfg.cutoff_date
-    for key in cfg.section("files"):
-        if key in CRITICAL_FILES:
-            continue
-        note = PRODUCED_BY.get(key, "not written by any known step")
-        if key in COHORT_FILES:
-            note += f" [per-cutoff, shown for {cutoff}]"
-            generated.append((key, note, cfg.cohort_file(cutoff, key)))
-        else:
-            generated.append((key, note, cfg.file(key)))
-    # Pipeline order reads better than alphabetical; the step labels sort into it,
-    # and anything unrecognised falls to the end.
-    generated.sort(key=lambda row: (row[1].startswith("step") is False, row[1], row[0]))
-    return critical, generated
+        rows.append((name, "built by cmake", cfg.path("bin_dir") / name))
+    return rows
 
 
 def _shorten(cfg: "Config", resolved: Optional[Path]) -> str:
@@ -537,12 +521,14 @@ def _shorten(cfg: "Config", resolved: Optional[Path]) -> str:
 
 
 def _print_audit(cfg: "Config") -> int:
-    """Print the two-section audit; return the number of missing critical paths."""
-    critical, generated = _audit_rows(cfg)
+    """Print the critical-input audit; return the number that are missing."""
+    inputs = _input_rows(cfg)
+    support = _support_rows(cfg)
+
+    key_w = max(len(label) for label, _, _ in inputs + support)
+    path_w = max(len(_shorten(cfg, r)) for _, _, r in inputs + support)
 
     def show(rows):
-        key_w = max(len(label) for label, _, _ in rows)
-        path_w = max(len(_shorten(cfg, r)) for _, _, r in rows)
         missing = 0
         for label, note, resolved in rows:
             if resolved is None:
@@ -563,14 +549,15 @@ def _print_audit(cfg: "Config") -> int:
 
     print()
     print("CRITICAL — inputs the pipeline reads and never regenerates")
+    print("=" * 78)
+    print("Input files you download")
     print("-" * 78)
-    n_missing = show(critical)
+    n_missing = show(inputs)
 
     print()
-    print("NON-CRITICAL — intermediates written by a pipeline step;")
-    print("               MISSING only means that step has not run yet")
+    print("Directories and executables")
     print("-" * 78)
-    n_pending = show(generated)
+    n_missing += show(support)
 
     print()
     if n_missing:
@@ -578,7 +565,6 @@ def _print_audit(cfg: "Config") -> int:
               f"until these exist.")
     else:
         print("All critical inputs present.")
-    print(f"{n_pending} of {len(generated)} intermediates not yet generated.")
     return n_missing
 
 

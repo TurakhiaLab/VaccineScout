@@ -122,24 +122,24 @@ for any cutoff date by running:
 
 ```bash
 # Provide full path except the output_file name
-python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 --mat public-latest.all.masked.pb.gz --reference NC_045512v2.fa --output_dir results --output_file vaccinescout_medoids.csv
+python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
+  --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
+  --output_dir <path_to>/<output_folder> --output_file vaccinescout_medoids.csv
 ```
 
-⚠️ Public SARS-CoV-2 MATs can be downloaded from [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/). Chronumental is not required when using these MATs, as haplotype dates are extracted directly from their names.
-
-By default each leaf is dated from the trailing date field of its name. A full
-`YYYY-MM-DD` is used as given, and a `YYYY-MM` is taken as the first of that
-month. Only a bare year (`YYYY`) or an unparseable value is dropped. Two alternatives:
+⚠️ Public SARS-CoV-2 MATs and their metadata can be downloaded from [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/). Chronumental is not required to run VaccineScout, but is recommended because it can assign dates to haplotypes that lack complete dates in their names. Without an external dates file, VaccineScout extracts dates from each haplotype name by searching for the `YYYY-MM-DD` pattern. It also accepts the `YYYY-MM` format and assigns the first day of the corresponding month. Haplotypes with only a bare year (`YYYY`) or an otherwise unparseable date are excluded from the analysis. These cases can be addressed using either of the following methods:
 
 ```bash
-# Provide an external metadata file, which can be downloaded alongside the MAT
+# Provide an external metadata file containing dates, which can be downloaded alongside the MAT
 python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
-  --metadata public-latest.metadata.tsv.gz --mat public-latest.all.masked.pb.gz --output_dir results --output_file vaccinescout_medoids.csv --reference NC_045512v2.fa
+  --metadata <path_to>/public-latest.metadata.tsv.gz \
+  --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
+  --output_dir <path_to>/<output_folder> --output_file vaccinescout_medoids.csv
 
-# Dates generated from a chronumental run (step 0)
+# Dates generated from a chronumental run (RECOMMENDED)
 python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
-  --dates chronumental_dates_public-latest.metadata.tsv --mat public-latest.all.masked.pb.gz --output_dir results --output_file vaccinescout_medoids.csv --reference NC_045512v2.fa
-```
+  --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
+  --output_dir <path_to>/<output_folder> --output_file vaccinescout_medoids.csv
 
 ## <a name="config"></a> Configuration
 

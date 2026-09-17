@@ -21,6 +21,7 @@
   - [2. Create the environment](#envs)
   - [3. Build the C++ helpers](#build)
   - [4. Register the Jupyter kernel](#kernel)
+- [Quick Start: Running VaccineScout using MAT](#quickstart)
 - [Configuration](#config)
 - [Running the Pipeline](#pipeline)
   - [Steps 0–4. MAT processing and PyR<sub>0</sub> table generation](#steps-0-4)
@@ -114,6 +115,32 @@ python -m ipykernel install --user \
   --name vaccinescout --display-name "Python (vaccinescout)"
 ```
 
+## <a name="quickstart"></a> Quick Start: Running VaccineScout using MAT
+
+After installation, you can use VaccineScout to select vaccine variants 
+for any cutoff date by running:
+
+```bash
+# Provide full path except the output_file name
+python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 --mat public-latest.all.masked.pb.gz --reference NC_045512v2.fa --output_dir results --output_file vaccinescout_medoids.csv
+```
+
+⚠️ Public SARS-CoV-2 MATs can be downloaded from [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/). Chronumental is not required when using these MATs, as haplotype dates are extracted directly from their names.
+
+By default each leaf is dated from the trailing date field of its name. A full
+`YYYY-MM-DD` is used as given, and a `YYYY-MM` is taken as the first of that
+month. Only a bare year (`YYYY`) or an unparseable value is dropped. Two alternatives:
+
+```bash
+# Provide an external metadata file, which can be downloaded alongside the MAT
+python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
+  --metadata public-latest.metadata.tsv.gz --mat public-latest.all.masked.pb.gz --output_dir results --output_file vaccinescout_medoids.csv --reference NC_045512v2.fa
+
+# Dates generated from a chronumental run (step 0)
+python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
+  --dates chronumental_dates_public-latest.metadata.tsv --mat public-latest.all.masked.pb.gz --output_dir results --output_file vaccinescout_medoids.csv --reference NC_045512v2.fa
+```
+
 ## <a name="config"></a> Configuration
 
 Every path and run parameter is defined in **`config.yaml`** at the 
@@ -154,6 +181,8 @@ Run the twelve steps in this order. All of them run in the single
 | 9 | [`new_mutations_fitness.ipynb`](#steps-5-9) | Fig. 4C |
 | 10 | [`vaccinescout_results_across_years.py`](#step-10) | Supplementary Figs. 2, 3, and 6 |
 | 11 | [`plot_lineage_proportions.py`](#step-11) | Fig. 4A |
+
+⚠️ The results in the manuscript were obtained using a SARS-CoV-2 MAT that included sequences from GISAID, which are subject to data-sharing restrictions and therefore cannot be distributed by us. However, similar results can be obtained using publicly available SARS-CoV-2 MATs, which can be downloaded from [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/).
 
 ### <a name="steps-0-4"></a> Steps 0–4 — MAT processing and PyR<sub>0</sub> table generation
 
@@ -314,9 +343,10 @@ python scripts/plot_lineage_proportions.py
 config.yaml                  All paths and run parameters
 envs/                        Conda environment specifications
 scripts/
-  config_loader.py           Reads config.yaml; run directly to audit paths
-  Helpers.py                 Cohort splitting, mutation parsing, fitness scoring
-  run_mat_pipeline.sh        Driver for steps 0-4 (chronumental + the four below)
+  config_loader.py                           Reads config.yaml; run directly to audit paths
+  Helpers.py                                 Cohort splitting, mutation parsing, fitness scoring
+  run_mat_pipeline.sh                        Driver for steps 0-4 (chronumental + the four below)
+  run_vaccinescout_from_mat.py               medoid CSV
   get_amino_acid_mutations_of_sequences.py   Spike amino acid mutations
   get_lineage_fasta.py                       lineage spike sequences
   lineage_spike_from_mat.py                  FDA strain sequences
@@ -325,7 +355,7 @@ scripts/
   plot_lineage_proportions.py                lineage_proportions_across_years.svg
   min_dist.cpp / pairwise_dist.cpp           Substitution distance kernels
   CMakeLists.txt
-  *.ipynb                    Analysis notebooks (table (#pipeline))
+  *.ipynb                    Analysis notebooks (steps 5-9)
 ```
 
 ## <a name="troubleshooting"></a> Troubleshooting

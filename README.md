@@ -141,6 +141,7 @@ python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
   --dates <path_to>/chronumental_dates_public-latest.metadata.tsv
   --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
   --output_dir <path_to>/<output_folder> --output_file vaccinescout_medoids.csv
+```
 
 ## <a name="config"></a> Configuration
 

@@ -15,7 +15,7 @@
 
 paths:
   # Directory holding the large generated artefacts.
-  data_root: data_test
+  data_root: data
 
   # Third-party checkouts, relative to the repo root unless absolute.
   # Directory holding the prebuilt `covfit_cli` binary. Download and extract:
@@ -30,7 +30,7 @@ paths:
   bin_dir: scripts
 
   # FASTAs for vaccine sequences are present here.
-  pfizer_dir: data_test/Pfizer
+  pfizer_dir: data/Pfizer
 
 # ---------------------------------------------------------------------------
 # Filenames inside paths.data_root. Override any single entry without touching
@@ -132,13 +132,13 @@ analysis:
 
   # UPDATE ----> To select a different analysis date 
   # Default cutoff date. Notebooks read this; override in-notebook to sweep.
-  cutoff_date: '2024-06-01'
+  cutoff_date: '2022-06-01'
 
   # UPDATE ----> When selecting a different analysis date 
   # Options include EVEscore_Wuhan_A, EVEscore_Omicron_BA.4, EVEscore_Omicron_XBB.
   # EVEscape score table under <data_root>/EVEscape/<eve_backbone>.
   eve_subdir: EVEscape
-  eve_backbone: EVEscore_Omicron_XBB
+  eve_backbone: EVEscore_Wuhan_A
 
   # split_circulating_and_future() arguments
   left_buffer_days: 4

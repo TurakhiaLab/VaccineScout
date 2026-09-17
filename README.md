@@ -124,23 +124,32 @@ for any cutoff date by running:
 # Provide full path except the output_file name
 python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
   --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
-  --output_dir <path_to>/<output_folder> --output_file vaccinescout_medoids.csv
+  --output_dir <path_to>/<output_folder> --output_file <file_name.csv>
 ```
 
-⚠️ Public SARS-CoV-2 MATs and their metadata can be downloaded from [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/). Chronumental is not required to run VaccineScout, but is recommended because it can assign dates to haplotypes that lack complete dates in their names. Without an external dates file, VaccineScout extracts dates from each haplotype name by searching for the `YYYY-MM-DD` pattern. It also accepts the `YYYY-MM` format and assigns the first day of the corresponding month. Haplotypes with only a bare year (`YYYY`) or an otherwise unparseable date are excluded from the analysis. These cases can be addressed using either of the following methods:
+⚠️ Public SARS-CoV-2 MATs and their metadata can be downloaded from
+ [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/). 
+ Chronumental is not required to run VaccineScout, but is recommended because
+  it can assign dates to haplotypes that lack complete dates in their names. 
+  Without an external dates file, VaccineScout extracts dates from each 
+  haplotype name by searching for the `YYYY-MM-DD` pattern. It also accepts 
+  the `YYYY-MM` format and assigns the first day of the corresponding month. 
+  Haplotypes with only a bare year (`YYYY`) or an otherwise unparseable date 
+  are excluded from the analysis. These cases can be addressed using either 
+  of the following methods:
 
 ```bash
 # Provide an external metadata file containing dates, which can be downloaded alongside the MAT
 python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
   --metadata <path_to>/public-latest.metadata.tsv.gz \
   --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
-  --output_dir <path_to>/<output_folder> --output_file vaccinescout_medoids.csv
+  --output_dir <path_to>/<output_folder> --output_file <file_name.csv>
 
 # Dates generated from a chronumental run (RECOMMENDED)
 python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
   --dates <path_to>/chronumental_dates_public-latest.metadata.tsv
   --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
-  --output_dir <path_to>/<output_folder> --output_file vaccinescout_medoids.csv
+  --output_dir <path_to>/<output_folder> --output_file <file_name.csv>
 ```
 
 ## <a name="config"></a> Configuration
@@ -154,19 +163,25 @@ python scripts/config_loader.py
 ```
 
 This lists only what the pipeline reads as input, so anything
-reported MISSING is a hard stop. It comes in two groups:
+reported MISSING is a hard stop. There are two groups:
 
-* **Input files** — the MAT tree (`.pb`), the Newick tree (`.nwk`) and 
-  the corresponding metadata TSV, the reference genome (`NC_045512v2.fa`),
-  the PyR<sub>0</sub> (`mutations.tsv`), the EVEscape (`eve_backbone`), 
-  and a Pfizer genome FASTA per cutoff (`pfizer_fasta_by_cutoff`).
+* **Input files** — MAT (`mat`), Newick tree (`tree_newick`) and 
+  corresponding metadata (`metadata`), reference genome (`reference`),
+  PyR<sub>0</sub> (`pyro_mutations_filename`), EVEscape (`eve_backbone`), 
+  and Pfizer genomes FASTA per cutoff (`pfizer_fasta_by_cutoff`).
 * **Directories and executables** — `data_root`, `pyro_cov`, `covfit_cli`, 
-  `pfizer_dir`, and `min_dist` / `pairwise_dist` binaries.
+  `pfizer_dir`, and `min_dist` and `pairwise_dist` binaries.
+
+⚠️ The publicly available SARS-CoV-2 MAT, Newick tree, and corresponding 
+metadata can be downloaded from 
+[here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2). 
+Download these files to the `data` directory and update the corresponding 
+paths in `config.yaml`.
 
 ## <a name="pipeline"></a> Running the Pipeline
 
-Run the twelve steps in this order. All of them run in the single
-`vaccinescout` environment.
+Run the twelve steps in the order shown below. All steps should be run 
+within the same `vaccinescout` environment.
 
 | # | Step | Figure |
 | --- | --- | --- |
@@ -184,7 +199,12 @@ Run the twelve steps in this order. All of them run in the single
 | 10 | [`vaccinescout_results_across_years.py`](#step-10) | Supplementary Figs. 2, 3, and 6 |
 | 11 | [`plot_lineage_proportions.py`](#step-11) | Fig. 4A |
 
-⚠️ The results in the manuscript were obtained using a SARS-CoV-2 MAT that included sequences from GISAID, which are subject to data-sharing restrictions and therefore cannot be distributed by us. However, similar results can be obtained using publicly available SARS-CoV-2 MATs, which can be downloaded from [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/).
+⚠️ The results in the manuscript were obtained using a SARS-CoV-2 MAT 
+that included sequences from GISAID, which are subject to data-sharing 
+restrictions and therefore cannot be distributed by us. However, 
+similar results can be obtained using publicly available SARS-CoV-2 
+MATs, which can be downloaded from 
+[here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/).
 
 ### <a name="steps-0-4"></a> Steps 0–4 — MAT processing and PyR<sub>0</sub> table generation
 

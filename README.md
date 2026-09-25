@@ -193,10 +193,10 @@ within the same `vaccinescout` environment.
 | 5a | [`create_from_chronumental_data.ipynb`](#steps-5-9) *(recommended)* | — |
 | 5b | [`create_from_metadata.ipynb`](#steps-5-9) *(alternative to 5a)* | — |
 | 6 | [`rank_analysis.ipynb`](#steps-5-9) | Fig. 2 |
-| 7 | [`vaccinescout_selection.ipynb`](#steps-5-9) | Fig. 3 |
-| 8 | [`new_mutations_cumulative.ipynb`](#steps-5-9) | Fig. 4B |
-| 9 | [`new_mutations_fitness.ipynb`](#steps-5-9) | Fig. 4C |
-| 10 | [`vaccinescout_results_across_years.py`](#step-10) | Supplementary Figs. 2, 3, and 6 |
+| 7 | [`vaccinescout_selection.ipynb`](#steps-5-9) | Fig. 3, Supplementary Fig. 1 (Update `cutoff_date`) |
+| 8 | [`new_mutations_cumulative.ipynb`](#steps-5-9) | Fig. 4B, Supplementary Fig. 4 (Update `cutoff_date`) |
+| 9 | [`new_mutations_fitness.ipynb`](#steps-5-9) | Fig. 4C, Supplementary Figs. 5 and 6 (Update `cutoff_date`) |
+| 10 | [`vaccinescout_results_across_years.py`](#step-10) | Supplementary Figs. 2, 3, and 7 |
 | 11 | [`plot_lineage_proportions.py`](#step-11) | Fig. 4A |
 
 ⚠️ The results in the manuscript were obtained using a SARS-CoV-2 MAT 

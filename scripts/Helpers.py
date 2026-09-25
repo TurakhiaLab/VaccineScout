@@ -672,3 +672,77 @@ def get_mutations_from_remainder(anchor_remainder, mutations_lookup):
                 covered_keys.add(key)
                 mutations.append(piece)
     return mutations
+
+def _spike_sort_key(mutation: str):
+    """Order a Spike substitution by site, then new allele, then old allele.
+    """
+    match = SPIKE_AA_SUB_RE.match(mutation)
+    if not match:
+        return (1, 0, "", "", mutation)
+    old_aa, site, new_aa = match.group(1), int(match.group(2)), match.group(3)
+    return (0, site, new_aa, old_aa, mutation)
+
+
+def canonical_mutations(mutations: Sequence[str]) -> Tuple[str, ...]:
+    """A branch's Spike mutations in canonical order."""
+    return tuple(sorted(mutations, key=_spike_sort_key))
+
+
+def accumulate_spike_events(
+    table: Dict[Tuple[str, ...], Set[Tuple[str, ...]]],
+    branch_muts: Dict[str, Tuple[str, ...]],
+) -> Tuple[List[str], Dict[str, int]]:
+    """Count Spike mutation events in the Spike tree, one per distinct path.
+
+    ``table`` maps a compressed anchor -> parent-of-leaf path (mutation-bearing
+    nodes only) to the set of distinct terminal mutation combinations carried by
+    the leaves under it, each already in canonical order. ``branch_muts`` maps a
+    node to the Spike mutations on its incoming branch.
+
+    Each key is walked from the anchor down, accumulating the Spike path as a
+    tuple of canonical per-branch mutation sets. A branch is counted the first
+    time its *path content* is seen rather than the first time its node id is
+    seen, so a branch shared by many tips counts once and two lineages that
+    arrived by an identical Spike path count once between them. A leaf is judged
+    by the same rule: its full path is the key's content with its own
+    combination appended, checked against the same set.
+
+    Returns the flat list of events (the last segment of every distinct path)
+    and a small stats dict.
+    """
+    visited: Set[str] = set()
+    seen_paths: Set[Tuple[Tuple[str, ...], ...]] = set()
+    invariant_violations = 0
+
+    for key, leaf_combinations in table.items():
+        content: Tuple[Tuple[str, ...], ...] = ()
+        for position, node in enumerate(key):
+            content = content + (canonical_mutations(branch_muts[node]),)
+
+            if node in visited:
+                above = [n for n in key[:position] if n not in visited]
+                if above:
+                    invariant_violations += 1
+                    print(
+                        f"  [invariant] {node} visited but {len(above)} "
+                        f"ancestor(s) above it are not: {above}",
+                        file=sys.stderr,
+                    )
+                continue
+
+            visited.add(node)
+            seen_paths.add(content)
+
+        for combination in leaf_combinations:
+            seen_paths.add(content + (combination,))
+
+    # Every path was reached by exactly one new branch -- its last segment -- so
+    # the set of paths already holds the events.
+    events = [mutation for path in seen_paths for mutation in path[-1]]
+
+    stats = {
+        "internal_branches": len(visited),
+        "distinct_spike_paths": len(seen_paths),
+        "invariant_violations": invariant_violations,
+    }
+    return events, stats

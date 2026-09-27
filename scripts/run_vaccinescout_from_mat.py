@@ -372,8 +372,9 @@ def build_cohort(
     Distinct lineages routinely share a Spike sequence -- a sublineage defined
     by a mutation outside Spike carries the same protein as its parent -- so
     the merged tips bring several lineage names with them. ``Lineage`` joins
-    every name seen on the variant's tips with ``|``, sorted so a rerun labels
-    it the same way.
+    every name seen on the variant's tips with ``|``, most tips first, so the
+    leading name is the variant's dominant lineage; names tying on tip count
+    fall back to alphabetical order so a rerun labels the variant the same way.
     """
     ids = [sequence_id(s) for s in sequences]
     id_to_seq = dict(zip(ids, sequences))
@@ -401,13 +402,19 @@ def build_cohort(
     cohort["Weight"] = cohort["Tip_Count"] / cohort["Tip_Count"].sum()
 
     # Every distinct lineage seen on a surviving variant's tips, merged into one
-    # name. Dropping the duplicates first means one row per (variant, lineage)
-    # pair rather than one per tip.
+    # name. Counting the tips behind each (variant, lineage) pair collapses the
+    # per-tip rows the same way a de-duplication would, but keeps the count to
+    # sort on, so the merged label reads as a ranking rather than an alphabet.
     kept = tips[tips["Sequence_ID"].isin(set(cohort["Sequence_ID"]))]
     pairs = (
         kept.loc[kept["Lineage"].notna(), ["Sequence_ID", "Lineage"]]
-        .drop_duplicates()
-        .sort_values(["Sequence_ID", "Lineage"])
+        .groupby(["Sequence_ID", "Lineage"], sort=False)
+        .size()
+        .reset_index(name="Pair_Tip_Count")
+        .sort_values(
+            ["Sequence_ID", "Pair_Tip_Count", "Lineage"],
+            ascending=[True, False, True],
+        )
     )
     merged = pairs.groupby("Sequence_ID", sort=False)["Lineage"].agg("|".join)
     cohort["Lineage"] = cohort["Sequence_ID"].map(merged)
@@ -640,9 +647,9 @@ def write_report(report: pd.DataFrame, path: Path) -> Path:
 
 def summarise_lineage(label, limit: int = 5) -> str:
     """
-    The first ``limit`` names of a merged lineage label, for the closing summary.
-    A variant whose Spike is shared across a clade can carry a hundred names,
-    which is worth having in the CSV but not on a terminal.
+    The ``limit`` most abundant names of a merged lineage label, for the closing
+    summary. ``build_cohort`` writes the label most tips first, so truncating it
+    keeps the top lineages that carry the variant.
     """
     if not isinstance(label, str) or not label:
         return "(no lineage on its tips)"

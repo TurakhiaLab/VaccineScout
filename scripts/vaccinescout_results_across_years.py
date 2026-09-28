@@ -1158,9 +1158,22 @@ def run_oracle_analysis(
         candidate_ids = oracle_future_df.loc[in_current, "Sequence_ID"].tolist()
 
         if not candidate_ids:
-            raise ValueError(
-                f"No overlapping sequences between {oracle_interval} and current_seq_df"
+            # PAM picks its medoids out of the circulating cohort, so a slice
+            # with no candidate has nothing to choose from. That happens either
+            # because the slice is empty -- the tree ends before the window
+            # closes, which is what a cutoff within 12 months of the last tip
+            # gives you -- or because nothing in it was circulating at the
+            # cutoff. 
+            reason = (
+                "the slice is empty"
+                if not point_ids
+                else f"none of its {len(point_ids):,} sequence(s) circulate at the cutoff"
             )
+            print(
+                f"  skipped: no oracle for {oracle_interval} because {reason}",
+                file=sys.stderr,
+            )
+            continue
 
         print(
             f"  {len(point_ids):,} future points, "

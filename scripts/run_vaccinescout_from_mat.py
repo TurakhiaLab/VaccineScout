@@ -249,10 +249,10 @@ def build_lineage_table(
         lineages.append(label or None)
 
         if (i + 1) % report_every == 0:
-            log(f"  {i + 1:,}/{len(leaf_ids):,} leaves annotated")
+            log(f"  {i + 1:,}/{len(leaf_ids):,} haplotypes annotated")
 
     table = pd.Series(lineages, index=pd.Index(leaf_ids), dtype="object")
-    log(f"  {table.notna().sum():,} leaf/lineage pair(s), "
+    log(f"  {table.notna().sum():,} haplotype/lineage pair(s), "
         f"{table.nunique():,} distinct lineage(s)")
     return table
 
@@ -273,32 +273,32 @@ def resolve_windowed_leaves(
     ``metadata``, else the leaf names.
     """
     lo, hi = circulating_window(cutoff_date)
-    log(f"  circulating window: [{lo.date()}, {hi.date()})")
+    log(f"  Circulating Window: [{lo.date()}, {hi.date()})")
 
     if dates_tsv is not None:
-        log(f"  dating from chronumental table {dates_tsv}")
+        log(f"  Extracting dates from chronumental table {dates_tsv}")
         dated = _windowed_sequences_from_table(dates_tsv, "strain", "predicted_date", lo, hi)
     elif metadata is not None:
-        log(f"  dating from metadata {metadata}")
+        log(f"  Extracting dates from metadata {metadata}")
         dated = _windowed_sequences_from_table(metadata, "strain", "date", lo, hi)
     else:
-        log("  dating from leaf names")
+        log("  Extracting dates from haplotype names")
         dated = dates_from_leaf_names(tree.get_leaves_ids())
         dated = dated[dated.notna() & (dated >= lo) & (dated < hi)]
 
     # A metadata or chronumental row can name a strain that is not a leaf on
     # this tree (and chronumental also dates internal nodes), so intersect.
-    log(f"  {len(dated):,} dated record(s) inside the window")
+    log(f"  {len(dated):,} dated haplotypes inside the window")
     leaf_ids: Set[str] = set(tree.get_leaves_ids())
-    log(f"  {len(leaf_ids):,} leaves on the tree")
+    log(f"  {len(leaf_ids):,} haplotypes on the tree")
 
     dated = dated[~dated.index.duplicated(keep="first")]
     windowed = dated[dated.index.isin(leaf_ids)]
-    log(f"  {len(windowed):,} windowed leaves present on the tree")
+    log(f"  {len(windowed):,} windowed haplotypes present on the tree")
 
     if windowed.empty:
         raise SystemExit(
-            f"No leaf on the tree is dated inside [{lo.date()}, {hi.date()}).\n"
+            f"No haplotype on the tree is dated inside [{lo.date()}, {hi.date()}).\n"
             "Check --cutoff-date against the tree's date range, and that the "
             "strain names in any --metadata / --dates table match the leaf names."
         )
@@ -345,7 +345,7 @@ def spike_sequences_for_leaves(
         sequences.append(sequence)
 
         if (i + 1) % report_every == 0:
-            log(f"  {i + 1:,}/{len(leaf_ids):,} leaves  ({len(cache):,} distinct haplotypes)")
+            log(f"  {i + 1:,}/{len(leaf_ids):,} haplotypes  ({len(cache):,} distinct haplotypes)")
 
     log(f"  translated {len(cache):,} distinct Spike haplotype(s)")
     return sequences
@@ -474,16 +474,21 @@ def write_medoid_fastas(
     return written
 
 
-def covfit_dir() -> Path:
+def covfit_dir(required: bool = True) -> Optional[Path]:
     """
     The ``CoVFit_CLI`` directory, taken from the working directory or the repo
     root rather than from ``paths.covfit_cli``.
+
+    ``required=False`` returns None rather than exiting, so a run can carry on
+    without fitness estimates instead of stopping on a missing optional tool.
     """
     executable = Path(str(CFG.get("covfit", "executable", "./covfit_cli"))).name
     candidates = (Path.cwd() / COVFIT_DIRNAME, REPO_ROOT / COVFIT_DIRNAME)
     for candidate in candidates:
         if (candidate / executable).is_file():
             return candidate
+    if not required:
+        return None
     raise SystemExit(
         f"Could not find {executable} in a {COVFIT_DIRNAME}/ directory. Looked in:\n  "
         + "\n  ".join(str(c) for c in candidates)
@@ -576,15 +581,21 @@ def pairwise_distances(
 def select_medoids(
     cohort: pd.DataFrame,
     dist_df: pd.DataFrame,
-    scores: pd.DataFrame,
-    beta: float,
+    scores: Optional[pd.DataFrame],
+    beta: Optional[float],
     k_max: int,
 ) -> Dict[int, List[str]]:
-    """Weighted PAM medoids for K = 1..k_max, weighted by tips * e**(beta*fitness)."""
+    """
+    Weighted PAM medoids for K = 1..k_max, weighted by tips * e**(beta*fitness).
+
+    ``scores=None`` drops the fitness term and leaves tip prevalence as the only
+    weight, which is what ``effective_weights`` already does when either the
+    scores or beta are absent.
+    """
     dist_matrix, weights, _id2idx, idx2id, fitness_scores = preprocess_for_weighted_pam_fast(
         cohort,
         dist_df,
-        use_covfit_scores=True,
+        use_covfit_scores=scores is not None,
         covfit_score_df=scores,
     )
 
@@ -786,10 +797,10 @@ def main() -> None:
     log(f"beta        : {args.beta}")
     log(f"output dir  : {work_dir}")
 
-    with Timer("Loading reference and MAT"):
+    with Timer("Loading Reference sequence and MAT"):
         refseq = gaam.load_reference_sequence_modified(args.reference)
         ref_spike_aa = ref_spike_amino_acids(refseq)
-        log(f"  reference Spike: {len(ref_spike_aa)} aa")
+        log(f"  Reference Spike: {len(ref_spike_aa)} aa")
         tree = bte.MATree(args.mat)
 
     with Timer("Dating and annotating haplotypes, selecting the circulating window"):
@@ -801,31 +812,53 @@ def main() -> None:
             args.annotation_index,
         )
 
-    with Timer("Translating Spike haplotypes"):
+    with Timer("Extracting Spike sequence of haplotypes"):
         sequences = spike_sequences_for_leaves(
             tree, windowed.index.tolist(), refseq, ref_spike_aa
         )
 
-    with Timer("Building the circulating cohort"):
+    with Timer("Building circulating variants data"):
         cohort, id_to_seq = build_cohort(
             sequences, windowed["Lineage"].tolist(), args.min_tip_count
         )
         write_cohort_lineages(cohort, work_dir / "cohort_lineages.tsv")
 
-    with Timer("Scoring the cohort with CoVFit"):
+    with Timer("Writing the FASTA for circulating variants"):
         fasta_path = write_fasta(cohort, id_to_seq, work_dir / "current_seq_df.fasta")
-        scores = covfit_scores(cohort, fasta_path, work_dir)
-        score_map = scores.set_index("Sequence_ID")[FITNESS_COLUMN]
-        cohort[FITNESS_COLUMN] = cohort["Sequence_ID"].map(score_map)
+
+    # CoVFit is optional. Without it there is no fitness term to weight by, and
+    # beta goes with it: effective_weights() falls back to tip prevalence when
+    # either is None, so selection continues on prevalence alone rather than
+    # stopping. FITNESS_COLUMN is still filled, with NaN, because build_report
+    # reports it and evaluate_on_current_vectorized reads it before handing it to
+    # effective_weights.
+    covfit_root = covfit_dir(required=False)
+    if covfit_root is None:
+        scores = None
+        beta = None
+        cohort[FITNESS_COLUMN] = np.nan
+        log("")
+        log("*** CoVFit is NOT available. VaccineScout will NOT consider "
+            "fitness estimates. ***")
+        log("*** Vaccine Candidates are selected based on current prevalence alone, and the"
+            "covfit_fitnesscolumn will be empty. ***")
+        log("")
+    else:
+        beta = args.beta
+        with Timer("Scoring the variants with CoVFit"):
+            scores = covfit_scores(cohort, fasta_path, work_dir)
+            score_map = scores.set_index("Sequence_ID")[FITNESS_COLUMN]
+            cohort[FITNESS_COLUMN] = cohort["Sequence_ID"].map(score_map)
 
     with Timer("Computing pairwise Spike distances"):
         dist_df = pairwise_distances(cohort, id_to_seq, work_dir)
 
-    with Timer(f"Selecting medoids (K = 1..{args.k_max}, beta = {args.beta})"):
-        medoids_by_k = select_medoids(cohort, dist_df, scores, args.beta, args.k_max)
+    beta_label = "none (no fitness)" if beta is None else f"{beta}"
+    with Timer(f"Selecting medoids (K = 1..{args.k_max}, beta = {beta_label})"):
+        medoids_by_k = select_medoids(cohort, dist_df, scores, beta, args.k_max)
 
     with Timer("Writing the report"):
-        report = build_report(medoids_by_k, cohort, id_to_seq, args.beta)
+        report = build_report(medoids_by_k, cohort, id_to_seq, beta)
         write_report(report, Path(args.output))
         write_medoid_fastas(medoids_by_k, id_to_seq, work_dir / "medoids")
 

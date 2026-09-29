@@ -449,6 +449,31 @@ def write_fasta(cohort: pd.DataFrame, id_to_seq: Dict[str, str], path: Path) -> 
     return path
 
 
+def write_medoid_fastas(
+    medoids_by_k: Dict[int, List[str]],
+    id_to_seq: Dict[str, str],
+    directory: Path,
+) -> List[Path]:
+    """
+    One FASTA per K, holding that K's medoid Spike sequences.
+
+    The header is the medoid's ``Sequence_ID`` and nothing else. That is the
+    same string the report CSV's ``medoid`` column carries, and the same key
+    used by ``current_id_to_seq.parquet`` and ``current_seq_df.fasta``, so a
+    record here joins onto any of them without parsing.
+    """
+    directory.mkdir(parents=True, exist_ok=True)
+    written: List[Path] = []
+    for k, medoid_ids in sorted(medoids_by_k.items()):
+        path = directory / f"medoids_k{k}.fasta"
+        with open(path, "w", encoding="utf-8") as handle:
+            for medoid in medoid_ids:
+                handle.write(f">{medoid}\n{id_to_seq[medoid]}\n")
+        written.append(path)
+    log(f"  wrote {len(written)} medoid FASTA(s) to {directory}")
+    return written
+
+
 def covfit_dir() -> Path:
     """
     The ``CoVFit_CLI`` directory, taken from the working directory or the repo
@@ -802,6 +827,7 @@ def main() -> None:
     with Timer("Writing the report"):
         report = build_report(medoids_by_k, cohort, id_to_seq, args.beta)
         write_report(report, Path(args.output))
+        write_medoid_fastas(medoids_by_k, id_to_seq, work_dir / "medoids")
 
     log(f"\nDone in {(time.time() - started) / 60:.1f} min.")
     log(f"\nMedoid lineages by K (up to 5 names each; full list in "

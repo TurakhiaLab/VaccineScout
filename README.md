@@ -1,6 +1,6 @@
 <div align="center">
 
-# VaccineScout: Computational Framework for Determining SARS-CoV-2 Vaccine Composition
+# VaccineScout: A Computational Framework for Guiding the Composition and Valency of SARS-CoV-2 Vaccine Updates
 
 
 [license-badge]: https://img.shields.io/badge/License-MIT-yellow.svg 
@@ -36,10 +36,29 @@
 
 ## <a name="intro"></a> Introduction
 
-VaccineScout is a computational framework that uses genomic surveillance data
-and fitness estimates to project the future prevalence of circulating SARS-CoV-2
-variants. It selects varying numbers of medoids (circulating variants) that 
-minimize the spike sequence distance to these forecasted variants and generates a distance-versus-valency curve to select the optimal vaccine valency.
+VaccineScout is a computational tool that addresses two key questions 
+in SARS-CoV-2 vaccine selection: **which** variants to include, and 
+**how many**. VaccineScout requires SARS-CoV-2 genomic surveillance 
+data in the form of **mutation-annotated trees** [MATs](https://github.com/yatisht/usher) 
+— daily-updated phylogeny containing all publicly available SARS-CoV-2 
+sequences, together with **variant fitness estimates**. 
+
+VaccineScout reads a MAT and extracts the spike amino acid sequences of 
+circulating SARS-CoV-2 variants, as the vaccines target the spike protein. 
+It then combines current variant prevalence with fitness estimates from 
+an existing model, [CoVFit](https://github.com/TheSatoLab/CoVFit) by default, 
+to project the future prevalence of circulating variants.
+
+Using these projected prevalences, VaccineScout selects *k* medoids as 
+candidate vaccine compositions. The medoids are chosen to minimize the 
+prevalence-weighted average spike sequence distance between projected 
+variants and their nearest selected medoid. VaccineScout evaluates this 
+objective across different values of *k*. Increasing *k* increases 
+vaccine complexity and cost while reducing the distance to projected 
+variants, with diminishing returns as additional variants are included. 
+Plotting this trade-off as distance versus *k* produces a knee point 
+that provides a data-driven basis for selecting vaccine valency.
+
 
 <div align="center">
    <img src="docs/images/VaccineScout_overview.svg" style="display: block; margin-left: auto; margin-right: auto; width: 100%;">
@@ -361,24 +380,23 @@ python scripts/plot_lineage_proportions.py
 
 ## <a name="layout"></a> Repository Layout
 
-```text
-config.yaml                  All paths and run parameters
-envs/                        Conda environment specifications
-scripts/
-  config_loader.py                           Reads config.yaml; run directly to audit paths
-  Helpers.py                                 Cohort splitting, mutation parsing, fitness scoring
-  run_mat_pipeline.sh                        Driver for steps 0-4 (chronumental + the four below)
-  run_vaccinescout_from_mat.py               medoid CSV
-  get_amino_acid_mutations_of_sequences.py   Spike amino acid mutations
-  get_lineage_fasta.py                       lineage spike sequences
-  lineage_spike_from_mat.py                  FDA strain sequences
-  pyro_aug.py                                Adding spike mutations scored by PyR0
-  vaccinescout_results_across_years.py       vaccinescout_medoid_report.xlsx and plots
-  plot_lineage_proportions.py                lineage_proportions_across_years.svg
-  min_dist.cpp / pairwise_dist.cpp           Substitution distance kernels
-  CMakeLists.txt
-  *.ipynb                    Analysis notebooks (steps 5-9)
-```
+| Path | Purpose | Step |
+| --- | --- | --- |
+| [`config.yaml`](config.yaml) | All paths and run parameters | — |
+| [`envs/`](envs/) | Conda environment specifications | — |
+| [`scripts/config_loader.py`](scripts/config_loader.py) | Reads `config.yaml`; run directly to audit paths | — |
+| [`scripts/Helpers.py`](scripts/Helpers.py) | Cohort splitting, mutation parsing, fitness scoring | — |
+| [`scripts/run_mat_pipeline.sh`](scripts/run_mat_pipeline.sh) | Driver for the four scripts below, plus `chronumental` | [0–4](#steps-0-4) |
+| [`scripts/get_amino_acid_mutations_of_sequences.py`](scripts/get_amino_acid_mutations_of_sequences.py) | Spike amino acid mutations | [1](#step-1) |
+| [`scripts/get_lineage_fasta.py`](scripts/get_lineage_fasta.py) | Lineage spike sequences | [2](#step-2) |
+| [`scripts/lineage_spike_from_mat.py`](scripts/lineage_spike_from_mat.py) | FDA strain sequences | [3](#step-3) |
+| [`scripts/pyro_aug.py`](scripts/pyro_aug.py) | Adding spike mutations scored by PyR<sub>0</sub> | [4](#step-4) |
+| [`scripts/*.ipynb`](scripts/) | Analysis notebooks | [5–9](#steps-5-9) |
+| [`scripts/vaccinescout_results_across_years.py`](scripts/vaccinescout_results_across_years.py) | `vaccinescout_medoid_report.xlsx` and plots | [10](#step-10) |
+| [`scripts/plot_lineage_proportions.py`](scripts/plot_lineage_proportions.py) | `lineage_proportions_across_years.svg` | [11](#step-11) |
+| [`scripts/run_vaccinescout_from_mat.py`](scripts/run_vaccinescout_from_mat.py) | Medoid CSV and per-K medoid FASTAs, straight from a MAT | [Quick Start](#quickstart) |
+| [`scripts/min_dist.cpp`](scripts/min_dist.cpp) / [`pairwise_dist.cpp`](scripts/pairwise_dist.cpp) | Substitution distance kernels | — |
+| [`scripts/CMakeLists.txt`](scripts/CMakeLists.txt) | Build definition for the two kernels above | — |
 
 ## <a name="troubleshooting"></a> Troubleshooting
 

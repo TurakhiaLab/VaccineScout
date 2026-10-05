@@ -136,19 +136,46 @@ python -m ipykernel install --user \
 
 ## <a name="quickstart"></a> Quick Start: Running VaccineScout using MAT
 
-After installation, you can use VaccineScout to select vaccine variants 
-for any cutoff date by running:
+After installation, VaccineScout can give vaccine recommendations for any cutoff 
+date directly from the SARS-CoV-2 MAT. The example below uses the Sept 1, 2026
+public tree.
 
+**1. Download the MAT** 
 ```bash
-# Provide full path except the output_file name
-python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
-  --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
-  --output_dir <path_to>/<output_folder> --output_file <file_name.csv>
+wget https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/2026/09/01/public-2026-09-01.all.masked.pb.gz
 ```
 
+**2. Run VaccineScout**:
+```bash
+python scripts/run_vaccinescout_from_mat.py --cutoff-date 2026-06-01 \
+  --mat public-2026-09-01.all.masked.pb.gz \
+  --reference data/NC_045512v2.fa \
+  --output_dir results --output_file vaccinescout_2026-06-01.csv
+```
+
+**3. Check outputs** 
+Under `results/`
+| Output | Contents |
+| --- | --- |
+| `vaccinescout_2026-06-01.csv` | one row per selected medoid: medoid ID, CoVFit fitness, average minimum spike-sequence distance between the forecasted prevalence of circulating variants and the selected candidates, and corresponding PANGO lineage(s) |
+| `medoids/medoids_k1.fasta` … `medoids/medoids_k8.fasta` | the selected medoid spike sequences, with one FASTA per selected K |
+
+Expected output in `vaccinescout_2026-06-01.csv`
+```text
+k,medoid,covfit_fitness,distance_current,lineage
+1,S_776c44ac2725,,9.558510638297875,XFG.1.1|XFG.1.1.1|XFG.1.1.10|XFG.1.1.4|XFG.1.1.6|XFG.1.1.9|XFG.1.1.5|XFG.1.1.8|XFG.1.1.11
+-----
+2,S_776c44ac2725,,3.9521276595744688,XFG.1.1|XFG.1.1.1|XFG.1.1.10|XFG.1.1.4|XFG.1.1.6|XFG.1.1.9|XFG.1.1.5|XFG.1.1.8|XFG.1.1.11
+2,S_cb542f5cf466,,3.9521276595744688,RE.2.5|SK.1|RE.2.2.3|RS.1.3|RE.1.1.1|RE.2|RE.2.1.5|RE.2.2.2|RE.2.3|SQ.2
+-----
+3,S_776c44ac2725,,2.797872340425532,XFG.1.1|XFG.1.1.1|XFG.1.1.10|XFG.1.1.4|XFG.1.1.6|XFG.1.1.9|XFG.1.1.5|XFG.1.1.8|XFG.1.1.11
+3,S_cb542f5cf466,,2.797872340425532,RE.2.5|SK.1|RE.2.2.3|RS.1.3|RE.1.1.1|RE.2|RE.2.1.5|RE.2.2.2|RE.2.3|SQ.2
+3,S_8cafe31ebd39,,2.797872340425532,PQ.2.8.1|RC.3|RC.5|PQ.2.7.2
+-----
+```
 ⚠️ Public SARS-CoV-2 MATs and their metadata can be downloaded from
  [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/). 
- Chronumental is not required to run VaccineScout, but is recommended because
+  Chronumental is not required to run VaccineScout, but is recommended because
   it can assign dates to haplotypes that lack complete dates in their names. 
   Without an external dates file, VaccineScout extracts dates from each 
   haplotype name by searching for the `YYYY-MM-DD` pattern. It also accepts 
@@ -158,15 +185,15 @@ python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
   of the following methods:
 
 ```bash
-# Provide an external metadata file containing dates, which can be downloaded alongside the MAT
-python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
-  --metadata <path_to>/public-latest.metadata.tsv.gz \
-  --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
-  --output_dir <path_to>/<output_folder> --output_file <file_name.csv>
-
 # Dates generated from a chronumental run (RECOMMENDED)
 python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
   --dates <path_to>/chronumental_dates_public-latest.metadata.tsv
+  --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
+  --output_dir <path_to>/<output_folder> --output_file <file_name.csv>
+
+# Provide an external metadata file containing dates, which can be downloaded alongside the MAT
+python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
+  --metadata <path_to>/public-latest.metadata.tsv.gz \
   --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
   --output_dir <path_to>/<output_folder> --output_file <file_name.csv>
 ```

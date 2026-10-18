@@ -159,6 +159,7 @@ Under `results/`
 | --- | --- |
 | `vaccinescout_2026-06-01.csv` | one row per selected medoid: medoid ID, CoVFit fitness, average minimum spike-sequence distance between the forecasted prevalence of circulating variants and the selected candidates, and corresponding PANGO lineage(s) |
 | `medoids/medoids_k1.fasta` … `medoids/medoids_k8.fasta` | the selected medoid spike sequences, with one FASTA per selected K |
+| `medoids/medoids_mutations.csv` | mutations of the selected medoids |
 
 Expected output in `vaccinescout_2026-06-01.csv`
 ```text

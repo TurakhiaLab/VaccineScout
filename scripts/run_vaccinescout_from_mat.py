@@ -65,7 +65,7 @@ if str(SCRIPT_DIR) not in sys.path:
 
 import get_amino_acid_mutations_of_sequences as gaam  # noqa: E402
 from config_loader import load_config  # noqa: E402
-from Helpers import apply_mutations_flat_list  # noqa: E402
+from Helpers import apply_mutations_flat_list, compute_mutations  # noqa: E402
 from lineage_spike_from_mat import (  # noqa: E402
     ref_spike_amino_acids,
     sort_spike_mutations,
@@ -474,6 +474,45 @@ def write_medoid_fastas(
     return written
 
 
+def write_medoid_mutations(
+    medoids_by_k: Dict[int, List[str]],
+    id_to_seq: Dict[str, str],
+    ref_spike_aa: str,
+    path: Path,
+) -> Path:
+    """
+    Every medoid selected at any valency, once, with its Spike mutations.
+
+    A medoid picked at K=1 is usually picked again at every larger K, so the
+    per-K FASTAs and the report both repeat it. Here each appears once, in the
+    order it first enters a medoid set, which is roughly decreasing importance.
+
+    Mutations are against the reference Spike, in site order, formatted
+    ``S:<ref><site><new>`` by ``Helpers.compute_mutations`` -- joined with 
+    ``|`` as the report's ``lineage`` column is, so no field needs quoting.
+    """
+    seen: List[str] = []
+    for k in sorted(medoids_by_k):
+        for medoid in medoids_by_k[k]:
+            if medoid not in seen:
+                seen.append(medoid)
+
+    frame = pd.DataFrame(
+        [
+            {
+                "medoid": medoid,
+                "mutations": "|".join(compute_mutations(id_to_seq[medoid], ref_spike_aa)),
+            }
+            for medoid in seen
+        ],
+        columns=["medoid", "mutations"],
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(path, index=False)
+    log(f"  wrote {len(frame)} unique medoid(s) to {path}")
+    return path
+
+
 def covfit_dir(required: bool = True) -> Optional[Path]:
     """
     The ``CoVFit_CLI`` directory, taken from the working directory or the repo
@@ -860,7 +899,12 @@ def main() -> None:
     with Timer("Writing the report"):
         report = build_report(medoids_by_k, cohort, id_to_seq, beta)
         write_report(report, Path(args.output))
-        write_medoid_fastas(medoids_by_k, id_to_seq, work_dir / "medoids")
+        medoid_dir = work_dir / "medoids"
+        write_medoid_fastas(medoids_by_k, id_to_seq, medoid_dir)
+        write_medoid_mutations(
+            medoids_by_k, id_to_seq, ref_spike_aa,
+            medoid_dir / "medoids_mutations.csv",
+        )
 
     log(f"\nDone in {(time.time() - started) / 60:.1f} min.")
     log(f"\nMedoid lineages by K (up to 5 names each; full list in "

@@ -48,14 +48,12 @@ files:
   # 1273 aa Spike *protein* FASTA.
   reference: NC_045512v2.fa
 
-  # --- Tree inputs. Replace all four together when moving to a newer tree. ---
-  mat: gisaidAndPublic.2025-09-01.masked.pb.gz          # UShER MAT, steps 1-3
-  tree_newick: gisaidAndPublic.2025-09-01.masked.nwk.gz # chronumental input
-  metadata: gisaidAndPublic.2025-09-01.metadata.tsv     # chronumental input
-
-  # chronumental output. The pipeline passes this to `--dates_out` explicitly,
-  # so the name is whatever you set here. 
-  chronumental_dates: chronumental_dates_gisaidAndPublic.2025-09-01.metadata.tsv
+  # --- [UPDATE HERE] Tree inputs. Replace all four together when moving to a newer tree. ---
+  mat: public-latest.all.masked.pb.gz                   # UShER MAT, steps 1-3
+  tree_newick: public-latest.all.nwk.gz                 # chronumental input
+  metadata: public-latest.metadata.tsv.gz               # chronumental input
+  # chronumental output.
+  chronumental_dates: chronumental_dates_public-latest.metadata.tsv
 
   node_spike_cumulative: all_nodes_spike_2025-09-01.parquet
   node_spike_branch: all_nodes_spike_2025-09-01_branch.parquet

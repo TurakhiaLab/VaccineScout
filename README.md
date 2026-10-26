@@ -225,11 +225,11 @@ reported MISSING is a hard stop. There are two groups:
 * **Directories and executables** — `data_root`, `pyro_cov`, `covfit_cli`, 
   `pfizer_dir`, and `min_dist` and `pairwise_dist` binaries.
 
-⚠️ The publicly available SARS-CoV-2 MAT, Newick tree, and corresponding 
+⚠️ The publicly available SARS-CoV-2 MAT, Newick tree, and associated 
 metadata can be downloaded from 
 [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2). 
-Download these files to the `data` directory and update the corresponding 
-paths in `config.yaml`.
+Download the files to the `data` directory and update the corresponding 
+`mat`, `tree_newick` and `metadata` variables in `config.yaml`.
 
 ## <a name="pipeline"></a> Running the Pipeline
 
@@ -261,7 +261,7 @@ MATs, which can be downloaded from
 
 ### <a name="steps-0-4"></a> Steps 0–4 — MAT processing and PyR<sub>0</sub> table generation
 
-All five steps run from a single script that reads `config.yaml`. The `config.yaml` requires the presence of `mat`, `tree_newick` and `metadata` in the `data` directory, which can be downloaded from [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/). 
+All five steps run from a single script that reads `config.yaml`.
 
 ```bash
 conda activate vaccinescout

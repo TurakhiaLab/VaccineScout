@@ -106,10 +106,16 @@ you can skip this step if you want to infer haplotype dates from their names.
 conda activate vaccinescout
 conda install -y -c conda-forge cudatoolkit=11.8.0 "cudnn<9.0"
 conda install -y -c bioconda chronumental
-conda remove --force -y jax jaxlib
 
+# chronumental's bioconda recipe pulls in a CPU-only jax. The next two
+# commands replace it with the CUDA build and belong together. 
+conda remove --force -y jax jaxlib
 pip install "jax==0.4.26" "jaxlib==0.4.26+cuda12.cudnn89" \
   -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+# Must print 0.4.26 and CUDA devices, e.g. "0.4.26 [cuda(id=0), cuda(id=1)]".
+# A CpuDevice means a step above failed and the GPU run will not work.
+python -c "import jax; print(jax.__version__, jax.devices())"
 ```
 
 ### <a name="build"></a> 3. Build the C++ helpers
@@ -255,7 +261,7 @@ MATs, which can be downloaded from
 
 ### <a name="steps-0-4"></a> Steps 0–4 — MAT processing and PyR<sub>0</sub> table generation
 
-All five steps run from a single script that reads `config.yaml`:
+All five steps run from a single script that reads `config.yaml`. The `config.yaml` requires the presence of `mat`, `tree_newick` and `metadata` in the `data` directory, which can be downloaded from [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/). 
 
 ```bash
 conda activate vaccinescout

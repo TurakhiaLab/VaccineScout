@@ -104,18 +104,18 @@ you can skip this step if you want to infer haplotype dates from their names.
 
 ```bash
 conda activate vaccinescout
-conda install -y -c conda-forge cudatoolkit=11.8.0 "cudnn<9.0"
 conda install -y -c bioconda chronumental
+```
 
-# chronumental's bioconda recipe pulls in a CPU-only jax. The next two
-# commands replace it with the CUDA build and belong together. 
+⚠️ You can append `--solver=libmamba` to `conda install` command to speed up dependency resolution and installation.
+
+
+If your system does not have a GPU (checked with `nvidia-smi`), set `use_gpu: false` in both the  `covfit` and `chronumental` section of `config.yaml`. Otherwise, if `nvidia-smi` runs successfully and reports an NVIDIA driver version of 525.60 or later, run the following commands.
+
+```bash
 conda remove --force -y jax jaxlib
 pip install "jax==0.4.26" "jaxlib==0.4.26+cuda12.cudnn89" \
   -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-
-# Must print 0.4.26 and CUDA devices, e.g. "0.4.26 [cuda(id=0), cuda(id=1)]".
-# A CpuDevice means a step above failed and the GPU run will not work.
-python -c "import jax; print(jax.__version__, jax.devices())"
 ```
 
 ### <a name="build"></a> 3. Build the C++ helpers
@@ -388,7 +388,7 @@ Generated outputs:
 
 A full run scores every cutoff year with CoVFit and rebuilds the pairwise distance
 matrices, which is slow. To re-run on existing intermediates, or to narrow the
-sweep:
+sweep for getting faster results:
 
 ```bash
 # reuse existing CoVFit predictions and pairwise_dist

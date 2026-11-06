@@ -449,3 +449,19 @@ built, or `paths.bin_dir` is wrong. See [step 3](#build).
 `./covfit_cli` with the working directory set to `paths.covfit_cli`. 
 
 ##  <a name="cite"></a> Citing VaccineScout
+If you use VaccineScout in your research or publications, please cite the following paper:<br><br>
+Gangwar P, Khanna S, Wertheim J, Lin B, Turakhia Y (2026) *VaccineScout: A Computational Framework for Guiding the Composition and Valency of SARS-CoV-2 Vaccine Updates*. medRxiv 2026.11.03.26367217. [https://doi.org/10.64898/2026.11.03.26367217](https://doi.org/10.64898/2026.11.03.26367217)
+
+### BibTeX
+
+```bibtex
+@article{gangwar2026vaccinescout,
+    author = {Gangwar, Pranav and Khanna, Sunreet and Wertheim, Joel and Lin, Bill and Turakhia, Yatish},
+    title = {VaccineScout: A Computational Framework for Guiding the Composition and Valency of SARS-CoV-2 Vaccine Updates},
+    journal = {medRxiv},
+    year = {2026},
+    publisher = {Cold Spring Harbor Laboratory Press},
+    doi = {10.64898/2026.11.03.26367217},
+    url = {https://doi.org/10.64898/2026.11.03.26367217}
+}
+```

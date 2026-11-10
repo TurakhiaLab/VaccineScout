@@ -104,7 +104,7 @@ you can skip this step if you want to infer haplotype dates from their names.
 
 ```bash
 conda activate vaccinescout
-conda install -y -c bioconda chronumental
+conda install -y -c conda-forge -c bioconda chronumental
 ```
 
 ⚠️ You can append `--solver=libmamba` to `conda install` command to speed up dependency resolution and installation.
@@ -194,7 +194,7 @@ k,medoid,covfit_fitness,distance_current,lineage
 ```bash
 # Dates generated from a chronumental run (RECOMMENDED)
 python scripts/run_vaccinescout_from_mat.py --cutoff-date 2022-06-01 \
-  --dates <path_to>/chronumental_dates_public-latest.metadata.tsv
+  --dates <path_to>/chronumental_dates_public-latest.metadata.tsv    \
   --mat <path_to>/public-latest.all.masked.pb.gz --reference <path_to>/NC_045512v2.fa \
   --output_dir <path_to>/<output_folder> --output_file <file_name.csv>
 
@@ -229,7 +229,14 @@ reported MISSING is a hard stop. There are two groups:
 metadata can be downloaded from 
 [here](https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2). 
 Download the files to the `data` directory and update the corresponding 
-`mat`, `tree_newick` and `metadata` variables in `config.yaml`.
+`mat`, `tree_newick` and `metadata` variables in `config.yaml`. You can use 
+the following commands for downloading the files.
+
+```bash
+wget -P data https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/public-latest.all.masked.pb.gz
+wget -P data https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/public-latest.all.nwk.gz
+wget -P data https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/UShER_SARS-CoV-2/public-latest.metadata.tsv.gz
+```
 
 ## <a name="pipeline"></a> Running the Pipeline
 
@@ -349,7 +356,19 @@ python scripts/pyro_aug.py
 jupyter lab --no-browser --port=8888
 ```
 
-Run the notebooks in `scripts/` in this order:
+⚠️ If JupyterLab is running on a remote server, the printed link points to the
+server, not your computer. To open it locally, forward the port by running this
+in a terminal on your local computer, and keep that terminal open. Then click on
+the link that Jupyter printed in your local browser.
+
+```bash
+ssh -N -L 8888:localhost:8888 <user>@<server>
+```
+If the port is busy, choose another one (e.g. `--port=9500`) and use that same 
+number in both commands.
+
+
+Run the notebooks from inside the `scripts/` dircetory in the following order:
 1. `create_from_chronumental_data.ipynb` (step 5a) or `create_from_metadata.ipynb` (5b)
    — 5b needs no `chronumental` run, but choosing it also rules out step 8
 2. `rank_analysis.ipynb (Fig. 2)`                                             (step 6)
